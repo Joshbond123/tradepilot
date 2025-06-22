@@ -26,6 +26,10 @@ export const AdminAuth = ({ onLogin, onClose }: AdminAuthProps) => {
     setIsLoading(true);
 
     try {
+      console.log('Entered password:', password);
+      console.log('Expected password:', ADMIN_PASSWORD);
+      console.log('Password match:', password === ADMIN_PASSWORD);
+      
       if (password === ADMIN_PASSWORD) {
         localStorage.setItem('admin_authenticated', 'true');
         localStorage.setItem('admin_login_time', new Date().toISOString());
@@ -42,6 +46,7 @@ export const AdminAuth = ({ onLogin, onClose }: AdminAuthProps) => {
         });
       }
     } catch (error) {
+      console.error('Authentication error:', error);
       toast({
         title: "Error",
         description: "Authentication failed.",
@@ -59,6 +64,7 @@ export const AdminAuth = ({ onLogin, onClose }: AdminAuthProps) => {
           <Shield className="h-12 w-12 text-red-400 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-white mb-2">Admin Access</h2>
           <p className="text-gray-400">Enter admin password to continue</p>
+          <p className="text-xs text-gray-500 mt-2">Password: TradePilot2024!</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">

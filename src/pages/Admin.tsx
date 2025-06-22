@@ -9,22 +9,22 @@ const Admin = () => {
   const navigate = useNavigate();
   const { isAuthenticated, login } = useAdminAuth();
 
-  useEffect(() => {
-    // If not authenticated, redirect to dashboard
-    if (!isAuthenticated) {
-      navigate('/dashboard');
-    }
-  }, [isAuthenticated, navigate]);
-
   const handleLogin = () => {
+    console.log('Admin login successful');
     login();
   };
+
+  const handleClose = () => {
+    navigate('/');
+  };
+
+  console.log('Admin page - isAuthenticated:', isAuthenticated);
 
   if (!isAuthenticated) {
     return (
       <AdminAuth
         onLogin={handleLogin}
-        onClose={() => navigate('/dashboard')}
+        onClose={handleClose}
       />
     );
   }
