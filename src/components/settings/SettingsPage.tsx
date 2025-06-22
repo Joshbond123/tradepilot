@@ -47,12 +47,14 @@ export const SettingsPage = () => {
       return data;
     },
     enabled: !!user?.id,
-    onSuccess: (data) => {
-      if (data) {
-        setFullName(data.full_name || '');
-      }
-    },
   });
+
+  // Handle profile data when it's loaded
+  useEffect(() => {
+    if (profile) {
+      setFullName(profile.full_name || '');
+    }
+  }, [profile]);
 
   const updateProfile = async () => {
     if (!user) return;
