@@ -11,6 +11,9 @@ import { Wallet, TrendingDown, TrendingUp, CheckCircle, XCircle, Clock } from 'l
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
+import type { Database } from '@/integrations/supabase/types';
+
+type WithdrawalStatus = Database['public']['Enums']['withdrawal_status'];
 
 export const AdminTransactionManagement = () => {
   const [processingWithdrawal, setProcessingWithdrawal] = useState<any>(null);
@@ -51,7 +54,7 @@ export const AdminTransactionManagement = () => {
   });
 
   const processWithdrawalMutation = useMutation({
-    mutationFn: async ({ withdrawalId, status, notes }: { withdrawalId: string; status: string; notes: string }) => {
+    mutationFn: async ({ withdrawalId, status, notes }: { withdrawalId: string; status: WithdrawalStatus; notes: string }) => {
       const { error } = await supabase
         .from('withdrawals')
         .update({
@@ -67,10 +70,11 @@ export const AdminTransactionManagement = () => {
       if (status === 'approved') {
         const withdrawal = withdrawals?.find(w => w.id === withdrawalId);
         if (withdrawal) {
+          const newBalance = Number(withdrawal.profiles.balance) - Number(withdrawal.amount);
           const { error: balanceError } = await supabase
             .from('profiles')
             .update({
-              balance: withdrawal.profiles.balance - withdrawal.amount
+              balance: newBalance
             })
             .eq('id', withdrawal.user_id);
           
@@ -110,11 +114,21 @@ export const AdminTransactionManagement = () => {
       
       if (depositError) throw depositError;
 
-      // Add to user balance
+      // Get current balance and add new amount
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('balance')
+        .eq('id', userId)
+        .single();
+      
+      if (profileError) throw profileError;
+
+      const newBalance = Number(profile.balance) + amount;
+      
       const { error: balanceError } = await supabase
         .from('profiles')
         .update({
-          balance: supabase.sql`balance + ${amount}`
+          balance: newBalance
         })
         .eq('id', userId);
       
@@ -361,7 +375,7 @@ export const AdminTransactionManagement = () => {
               <Button
                 onClick={() => processWithdrawalMutation.mutate({
                   withdrawalId: processingWithdrawal.id,
-                  status: 'rejected',
+                  status: 'rejected' as WithdrawalStatus,
                   notes: adminNotes
                 })}
                 variant="destructive"
@@ -372,7 +386,7 @@ export const AdminTransactionManagement = () => {
               <Button
                 onClick={() => processWithdrawalMutation.mutate({
                   withdrawalId: processingWithdrawal.id,
-                  status: 'approved',
+                  status: 'approved' as WithdrawalStatus,
                   notes: adminNotes
                 })}
                 className="flex-1 bg-green-600 hover:bg-green-700"

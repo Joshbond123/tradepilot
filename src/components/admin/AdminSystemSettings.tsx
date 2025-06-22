@@ -4,11 +4,11 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Settings, Save, Wallet, DollarSign, Globe } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
+import type { Json } from '@/integrations/supabase/types';
 
 export const AdminSystemSettings = () => {
   const [settings, setSettings] = useState<any>({});
@@ -59,7 +59,7 @@ export const AdminSystemSettings = () => {
     mutationFn: async (newSettings: any) => {
       const updates = Object.entries(newSettings).map(([key, value]) => ({
         setting_key: key,
-        setting_value: value,
+        setting_value: value as Json,
         updated_at: new Date().toISOString()
       }));
 
@@ -93,8 +93,8 @@ export const AdminSystemSettings = () => {
         const { error } = await supabase
           .from('wallet_addresses')
           .upsert({
-            crypto_type: cryptoType,
-            address: address,
+            crypto_type: cryptoType as 'BTC' | 'ETH' | 'USDT',
+            address: address as string,
             is_active: true,
             updated_at: new Date().toISOString()
           }, { onConflict: 'crypto_type' });
