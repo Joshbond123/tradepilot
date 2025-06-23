@@ -11,6 +11,7 @@ interface CryptoPair {
   name: string;
   symbol: string;
   current_price: number;
+  image: string;
 }
 
 interface ExchangePrice {
@@ -48,11 +49,14 @@ export const ArbitragePage = () => {
       const data = await response.json();
       setCryptoPairs(data);
       
-      // Generate arbitrage opportunities with correct profit calculation
+      // Generate arbitrage opportunities with different exchanges for buy/sell
       const opportunities = data.map((crypto: CryptoPair) => {
         const basePrice = crypto.current_price;
-        const buyExchange = exchanges[Math.floor(Math.random() * exchanges.length)];
-        const sellExchange = exchanges[Math.floor(Math.random() * exchanges.length)];
+        
+        // Get two different random exchanges
+        const shuffledExchanges = [...exchanges].sort(() => Math.random() - 0.5);
+        const buyExchange = shuffledExchanges[0];
+        const sellExchange = shuffledExchanges[1];
         
         const buyPrice = basePrice * (0.98 + Math.random() * 0.02); // Slightly lower
         const sellPrice = basePrice * (1.01 + Math.random() * 0.02); // Slightly higher
@@ -104,7 +108,10 @@ export const ArbitragePage = () => {
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             {cryptoPairs.map((crypto) => (
               <div key={crypto.id} className="bg-gray-700/30 p-3 rounded-lg text-center">
-                <p className="text-white font-semibold">{crypto.name}</p>
+                <div className="flex items-center justify-center mb-2">
+                  <img src={crypto.image} alt={crypto.name} className="w-6 h-6 mr-2" />
+                  <p className="text-white font-semibold">{crypto.name}</p>
+                </div>
                 <p className="text-sm text-gray-400">{crypto.symbol.toUpperCase()}</p>
               </div>
             ))}
@@ -152,6 +159,7 @@ export const ArbitragePage = () => {
               <div key={index} className="bg-gray-700/30 p-4 rounded-lg">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center space-x-3">
+                    <img src={opportunity.crypto.image} alt={opportunity.crypto.name} className="w-8 h-8" />
                     <h3 className="text-lg font-bold text-white">
                       {opportunity.crypto.name} ({opportunity.crypto.symbol.toUpperCase()})
                     </h3>

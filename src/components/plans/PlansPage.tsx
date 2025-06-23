@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -126,6 +125,8 @@ export const PlansPage = () => {
     if (planName.includes('Neural')) return '🧠';
     if (planName.includes('Quantum')) return '⚡';
     if (planName.includes('Titan')) return '👑';
+    if (planName.includes('Premium')) return '💎';
+    if (planName.includes('Elite')) return '🏆';
     return '🚀';
   };
 
@@ -152,13 +153,23 @@ export const PlansPage = () => {
     };
   };
 
-  const exchangeLogos = [
-    '/lovable-uploads/b7657bba-7cf8-4a24-a064-3f3a59193299.png', // Binance
-    '/lovable-uploads/e50e50af-d1d9-4edc-abb0-2ed5ddbc145f.png', // Coinbase
-    '/lovable-uploads/587fa5d4-f7b9-4420-8311-0e79d177af0b.png', // Kraken
-    '/lovable-uploads/d135e250-6557-4e7a-8d9b-19075d4f108a.png', // Huobi
-    '/lovable-uploads/82036cc7-571a-47d0-ae10-687c051f3b34.png'  // OKX
-  ];
+  const getExchangeLogos = (planName: string) => {
+    const allLogos = [
+      '/lovable-uploads/b7657bba-7cf8-4a24-a064-3f3a59193299.png', // Binance
+      '/lovable-uploads/e50e50af-d1d9-4edc-abb0-2ed5ddbc145f.png', // Coinbase
+      '/lovable-uploads/587fa5d4-f7b9-4420-8311-0e79d177af0b.png', // Kraken
+      '/lovable-uploads/d135e250-6557-4e7a-8d9b-19075d4f108a.png', // Huobi
+      '/lovable-uploads/82036cc7-571a-47d0-ae10-687c051f3b34.png'  // OKX
+    ];
+
+    if (planName.includes('Premium')) {
+      return allLogos.slice(0, 4); // 4 exchanges for Premium
+    }
+    if (planName.includes('Elite')) {
+      return allLogos; // 5 exchanges for Elite
+    }
+    return allLogos.slice(0, 3); // 3 exchanges for other plans
+  };
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -184,6 +195,7 @@ export const PlansPage = () => {
       <div className="grid md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-6">
         {plans?.map((plan: any) => {
           const balanceStatus = getBalanceStatus(plan);
+          const exchangeLogos = getExchangeLogos(plan.name);
           return (
             <Card 
               key={plan.id} 
@@ -229,7 +241,7 @@ export const PlansPage = () => {
               <div className="mb-4">
                 <p className="text-xs text-gray-500 mb-2">Supported Exchanges:</p>
                 <div className="flex flex-wrap gap-2">
-                  {exchangeLogos.slice(0, 3).map((logo, index) => (
+                  {exchangeLogos.map((logo, index) => (
                     <img 
                       key={index}
                       src={logo} 

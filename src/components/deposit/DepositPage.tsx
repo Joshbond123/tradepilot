@@ -34,19 +34,19 @@ export const DepositPage = () => {
     { 
       id: 'BTC', 
       name: 'Bitcoin', 
-      icon: '/lovable-uploads/400b72ed-f1cc-4cbc-b306-57a126c721d3.png', 
+      icon: 'https://assets.coingecko.com/coins/images/1/large/bitcoin.png?1547033579',
       color: 'text-orange-400' 
     },
     { 
       id: 'ETH', 
       name: 'Ethereum', 
-      icon: '/lovable-uploads/b42b8250-4f13-4b81-bc4f-52c43df7f07e.png', 
+      icon: 'https://assets.coingecko.com/coins/images/279/large/ethereum.png?1595348880',
       color: 'text-blue-400' 
     },
     { 
       id: 'USDT', 
       name: 'Tether (TRC-20)', 
-      icon: '/lovable-uploads/400b72ed-f1cc-4cbc-b306-57a126c721d3.png', 
+      icon: 'https://assets.coingecko.com/coins/images/325/large/Tether.png?1668148663',
       color: 'text-green-400' 
     },
   ];
