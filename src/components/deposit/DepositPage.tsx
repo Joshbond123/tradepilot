@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,8 +10,6 @@ import { useQuery } from '@tanstack/react-query';
 
 export const DepositPage = () => {
   const [selectedCrypto, setSelectedCrypto] = useState<'BTC' | 'ETH' | 'USDT'>('BTC');
-  const [amount, setAmount] = useState('');
-  const [transactionHash, setTransactionHash] = useState('');
   const { toast } = useToast();
 
   const { data: walletAddresses } = useQuery({
@@ -57,47 +54,6 @@ export const DepositPage = () => {
       title: "Copied!",
       description: "Address copied to clipboard",
     });
-  };
-
-  const submitDeposit = async () => {
-    if (!amount || !transactionHash) {
-      toast({
-        title: "Error",
-        description: "Please fill in all required fields",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      const { error } = await supabase
-        .from('deposits')
-        .insert({
-          user_id: user!.id,
-          amount: parseFloat(amount),
-          crypto_type: selectedCrypto,
-          wallet_address: currentWallet?.address || '',
-          transaction_hash: transactionHash,
-        });
-
-      if (error) throw error;
-
-      toast({
-        title: "Deposit Submitted",
-        description: "Your deposit has been submitted and is being processed.",
-      });
-
-      setAmount('');
-      setTransactionHash('');
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
   };
 
   return (
@@ -167,8 +123,8 @@ export const DepositPage = () => {
                     <ul className="space-y-1 text-xs">
                       <li>• Send only {selectedCrypto} to this address</li>
                       <li>• Minimum deposit: $50 USD equivalent</li>
-                      <li>• Deposits are processed within 2-6 confirmations</li>
-                      <li>• Save your transaction hash for reference</li>
+                      <li>• Funds will be automatically credited to your balance once confirmed on the blockchain</li>
+                      <li>• If you are not credited within 1 hour, please contact our support team to resolve the issue</li>
                     </ul>
                   </div>
                 </div>
@@ -177,44 +133,6 @@ export const DepositPage = () => {
           )}
         </Card>
       </div>
-
-      {/* Deposit Confirmation */}
-      <Card className="bg-gray-800/50 border-gray-700 p-6">
-        <h2 className="text-xl font-bold text-white mb-4">Confirm Your Deposit</h2>
-        <div className="grid md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="amount" className="text-gray-300">Amount ({selectedCrypto})</Label>
-            <Input
-              id="amount"
-              type="number"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="Enter amount sent"
-              className="bg-gray-700/50 border-gray-600 text-white"
-              step="0.00000001"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="txHash" className="text-gray-300">Transaction Hash</Label>
-            <Input
-              id="txHash"
-              value={transactionHash}
-              onChange={(e) => setTransactionHash(e.target.value)}
-              placeholder="Enter transaction hash"
-              className="bg-gray-700/50 border-gray-600 text-white"
-            />
-          </div>
-        </div>
-        
-        <Button
-          onClick={submitDeposit}
-          className="w-full mt-6 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white"
-        >
-          <CheckCircle className="h-4 w-4 mr-2" />
-          Submit Deposit
-        </Button>
-      </Card>
 
       {/* Recent Deposits */}
       <Card className="bg-gray-800/50 border-gray-700 p-6">

@@ -158,7 +158,7 @@ export const PlansPage = () => {
       '/lovable-uploads/b7657bba-7cf8-4a24-a064-3f3a59193299.png', // Binance
       '/lovable-uploads/e50e50af-d1d9-4edc-abb0-2ed5ddbc145f.png', // Coinbase
       '/lovable-uploads/587fa5d4-f7b9-4420-8311-0e79d177af0b.png', // Kraken
-      '/lovable-uploads/d135e250-6557-4e7a-8d9b-19075d4f108a.png', // Huobi
+      '/lovable-uploads/896ff303-edb2-4659-b66b-cd19fa70a6a7.png', // Huobi
       '/lovable-uploads/82036cc7-571a-47d0-ae10-687c051f3b34.png'  // OKX
     ];
 

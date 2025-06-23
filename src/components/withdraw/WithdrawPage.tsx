@@ -56,9 +56,24 @@ export const WithdrawPage = () => {
   });
 
   const cryptoOptions = [
-    { id: 'BTC', name: 'Bitcoin', min: 0.001 },
-    { id: 'ETH', name: 'Ethereum', min: 0.01 },
-    { id: 'USDT', name: 'Tether (TRC-20)', min: 10 },
+    { 
+      id: 'BTC', 
+      name: 'Bitcoin', 
+      min: 0.001,
+      icon: 'https://assets.coingecko.com/coins/images/1/large/bitcoin.png?1547033579'
+    },
+    { 
+      id: 'ETH', 
+      name: 'Ethereum', 
+      min: 0.01,
+      icon: 'https://assets.coingecko.com/coins/images/279/large/ethereum.png?1595348880'
+    },
+    { 
+      id: 'USDT', 
+      name: 'Tether (TRC-20)', 
+      min: 10,
+      icon: 'https://assets.coingecko.com/coins/images/325/large/Tether.png?1668148663'
+    },
   ];
 
   const submitWithdrawal = async () => {
@@ -159,7 +174,10 @@ export const WithdrawPage = () => {
                 <SelectContent className="bg-gray-800 border-gray-600">
                   {cryptoOptions.map((crypto) => (
                     <SelectItem key={crypto.id} value={crypto.id} className="text-white">
-                      {crypto.name} ({crypto.id})
+                      <div className="flex items-center space-x-2">
+                        <img src={crypto.icon} alt={crypto.name} className="w-5 h-5" />
+                        <span>{crypto.name} ({crypto.id})</span>
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -198,12 +216,12 @@ export const WithdrawPage = () => {
                 <AlertTriangle className="h-5 w-5 text-yellow-400 mt-0.5" />
                 <div className="text-sm text-yellow-300">
                   <p className="font-semibold mb-1">Important Notice:</p>
-                  <ul className="space-y-1 text-xs">
-                    <li>• Withdrawals require admin approval</li>
-                    <li>• Processing time: 24-48 hours</li>
-                    <li>• Double-check your wallet address</li>
-                    <li>• Network fees may apply</li>
-                  </ul>
+                  <p className="text-xs mb-2">
+                    Withdrawals are processed within 0–3 minutes. If you are not credited within 1 hour after requesting a withdrawal, please contact our support team.
+                  </p>
+                  <p className="text-xs">
+                    Ensure the wallet address you provide is correct. Funds sent to the wrong address cannot be recovered.
+                  </p>
                 </div>
               </div>
             </div>
