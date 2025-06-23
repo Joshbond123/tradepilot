@@ -83,6 +83,7 @@ export type Database = {
       investment_plans: {
         Row: {
           created_at: string | null
+          daily_profit_percentage: number | null
           description: string | null
           duration_days: number
           exchange_logos: string[] | null
@@ -96,6 +97,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          daily_profit_percentage?: number | null
           description?: string | null
           duration_days: number
           exchange_logos?: string[] | null
@@ -109,6 +111,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          daily_profit_percentage?: number | null
           description?: string | null
           duration_days?: number
           exchange_logos?: string[] | null

@@ -2,18 +2,17 @@
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Bot, CheckCircle, Star, TrendingUp, Clock, DollarSign } from 'lucide-react';
+import { Bot, CheckCircle, Star, TrendingUp, Clock, DollarSign, AlertCircle } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 export const PlansPage = () => {
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
-  const [investmentAmount, setInvestmentAmount] = useState('');
   const [user, setUser] = useState<any>(null);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const getUser = async () => {
@@ -70,56 +69,25 @@ export const PlansPage = () => {
     enabled: !!user?.id,
   });
 
-  const investInPlan = async () => {
-    if (!selectedPlan || !investmentAmount) {
-      toast({
-        title: "Error",
-        description: "Please select a plan and enter an investment amount",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const amount = parseFloat(investmentAmount);
-    const userBalance = profile?.balance ? Number(profile.balance) : 0;
-
-    if (amount < selectedPlan.min_amount) {
-      toast({
-        title: "Amount Too Low",
-        description: `Minimum investment for this plan is $${selectedPlan.min_amount}`,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (amount > selectedPlan.max_amount) {
-      toast({
-        title: "Amount Too High",
-        description: `Maximum investment for this plan is $${selectedPlan.max_amount}`,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (amount > userBalance) {
-      toast({
-        title: "Insufficient Balance",
-        description: "You don't have enough balance for this investment",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
+  const activatePlanMutation = useMutation({
+    mutationFn: async (plan: any) => {
+      const userBalance = profile?.balance ? Number(profile.balance) : 0;
+      const planMaxAmount = Number(plan.max_amount);
+      
+      if (userBalance < Number(plan.min_amount)) {
+        throw new Error(`Insufficient balance. Minimum deposit required: $${plan.min_amount}, Maximum: $${plan.max_amount}`);
+      }
+      
+      const investmentAmount = Math.min(userBalance, planMaxAmount);
       const endDate = new Date();
-      endDate.setDate(endDate.getDate() + selectedPlan.duration_days);
+      endDate.setDate(endDate.getDate() + plan.duration_days);
 
       const { error: investmentError } = await supabase
         .from('user_investments')
         .insert({
           user_id: user!.id,
-          plan_id: selectedPlan.id,
-          amount: amount,
+          plan_id: plan.id,
+          amount: investmentAmount,
           end_date: endDate.toISOString(),
         });
 
@@ -128,40 +96,67 @@ export const PlansPage = () => {
       // Deduct amount from user balance
       const { error: balanceError } = await supabase
         .from('profiles')
-        .update({ balance: userBalance - amount })
+        .update({ balance: userBalance - investmentAmount })
         .eq('id', user!.id);
 
       if (balanceError) throw balanceError;
 
+      return { investmentAmount, planName: plan.name };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: ['user-investments'] });
       toast({
-        title: "Investment Successful!",
-        description: `Successfully invested $${amount} in ${selectedPlan.name}`,
+        title: "Plan Activated Successfully!",
+        description: `Successfully activated ${data.planName} with $${data.investmentAmount}`,
       });
-
       setSelectedPlan(null);
-      setInvestmentAmount('');
-    } catch (error: any) {
+    },
+    onError: (error: any) => {
       toast({
-        title: "Error",
+        title: "Activation Failed",
         description: error.message,
         variant: "destructive",
       });
-    }
-  };
+    },
+  });
 
   const getPlanIcon = (planName: string) => {
-    if (planName.includes('Starter')) return '🌟';
-    if (planName.includes('Professional')) return '💼';
-    if (planName.includes('Premium')) return '💎';
-    if (planName.includes('Elite')) return '👑';
+    if (planName.includes('Alpha')) return '🤖';
+    if (planName.includes('Neural')) return '🧠';
+    if (planName.includes('Quantum')) return '⚡';
+    if (planName.includes('Titan')) return '👑';
     return '🚀';
+  };
+
+  const canActivatePlan = (plan: any) => {
+    const userBalance = profile?.balance ? Number(profile.balance) : 0;
+    return userBalance >= Number(plan.min_amount);
+  };
+
+  const getBalanceStatus = (plan: any) => {
+    const userBalance = profile?.balance ? Number(profile.balance) : 0;
+    const minAmount = Number(plan.min_amount);
+    const maxAmount = Number(plan.max_amount);
+    
+    if (userBalance < minAmount) {
+      return {
+        canActivate: false,
+        message: `Insufficient balance. Min: $${minAmount.toLocaleString()}, Max: $${maxAmount.toLocaleString()}`
+      };
+    }
+    
+    return {
+      canActivate: true,
+      message: `Ready to activate with up to $${Math.min(userBalance, maxAmount).toLocaleString()}`
+    };
   };
 
   return (
     <div className="p-4 md:p-6 space-y-6">
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-white mb-2">AI Investment Plans</h1>
-        <p className="text-gray-400">Choose from our AI-powered trading plans to start earning passive income</p>
+        <p className="text-gray-400">Professional AI-powered trading strategies for automated profits</p>
       </div>
 
       {/* Available Balance */}
@@ -179,146 +174,105 @@ export const PlansPage = () => {
 
       {/* Investment Plans */}
       <div className="grid md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-6">
-        {plans?.map((plan: any) => (
-          <Card 
-            key={plan.id} 
-            className={`bg-gray-800/50 border-gray-700 p-6 cursor-pointer transition-all ${
-              selectedPlan?.id === plan.id 
-                ? 'border-blue-500 bg-blue-900/20' 
-                : 'hover:border-gray-600'
-            }`}
-            onClick={() => setSelectedPlan(plan)}
-          >
-            <div className="text-center mb-4">
-              <div className="text-4xl mb-2">{getPlanIcon(plan.name)}</div>
-              <h3 className="text-xl font-bold text-white mb-1">{plan.name}</h3>
-              <Badge 
-                variant="secondary" 
-                className="bg-green-600/20 text-green-400 border-green-500/30"
-              >
-                {plan.profit_percentage}% Monthly
-              </Badge>
-            </div>
-
-            <div className="space-y-3 mb-6">
-              <div className="flex items-center space-x-2">
-                <DollarSign className="h-4 w-4 text-gray-400" />
-                <span className="text-gray-300 text-sm">
-                  ${Number(plan.min_amount).toLocaleString()} - ${Number(plan.max_amount).toLocaleString()}
-                </span>
-              </div>
-              
-              <div className="flex items-center space-x-2">
-                <Clock className="h-4 w-4 text-gray-400" />
-                <span className="text-gray-300 text-sm">{plan.duration_days} Days</span>
-              </div>
-              
-              <div className="flex items-center space-x-2">
-                <TrendingUp className="h-4 w-4 text-gray-400" />
-                <span className="text-gray-300 text-sm">Daily Profits</span>
-              </div>
-            </div>
-
-            <p className="text-gray-400 text-sm mb-4">{plan.description}</p>
-
-            {plan.exchange_logos && (
-              <div className="mb-4">
-                <p className="text-xs text-gray-500 mb-2">Supported Exchanges:</p>
-                <div className="flex flex-wrap gap-1">
-                  {plan.exchange_logos.map((exchange: string, index: number) => (
-                    <Badge key={index} variant="outline" className="text-xs">
-                      {exchange}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <Button
-              onClick={() => setSelectedPlan(plan)}
-              variant={selectedPlan?.id === plan.id ? "default" : "outline"}
-              className={`w-full ${
+        {plans?.map((plan: any) => {
+          const balanceStatus = getBalanceStatus(plan);
+          return (
+            <Card 
+              key={plan.id} 
+              className={`bg-gray-800/50 border-gray-700 p-6 cursor-pointer transition-all ${
                 selectedPlan?.id === plan.id 
-                  ? 'bg-blue-600 hover:bg-blue-700' 
-                  : 'border-gray-600 text-gray-400 hover:text-white'
+                  ? 'border-blue-500 bg-blue-900/20' 
+                  : 'hover:border-gray-600'
               }`}
+              onClick={() => setSelectedPlan(plan)}
             >
-              {selectedPlan?.id === plan.id ? 'Selected' : 'Select Plan'}
-            </Button>
-          </Card>
-        ))}
-      </div>
-
-      {/* Investment Form */}
-      {selectedPlan && (
-        <Card className="bg-gray-800/50 border-gray-700 p-6">
-          <h2 className="text-xl font-bold text-white mb-4">
-            Invest in {selectedPlan.name}
-          </h2>
-          
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div>
-                <label className="block text-gray-300 text-sm mb-2">Investment Amount (USD)</label>
-                <Input
-                  type="number"
-                  value={investmentAmount}
-                  onChange={(e) => setInvestmentAmount(e.target.value)}
-                  placeholder={`Min: $${selectedPlan.min_amount}`}
-                  className="bg-gray-700/50 border-gray-600 text-white"
-                  min={selectedPlan.min_amount}
-                  max={selectedPlan.max_amount}
-                />
-                <p className="text-xs text-gray-400 mt-1">
-                  Range: ${Number(selectedPlan.min_amount).toLocaleString()} - ${Number(selectedPlan.max_amount).toLocaleString()}
-                </p>
+              <div className="text-center mb-4">
+                <div className="text-4xl mb-2">{getPlanIcon(plan.name)}</div>
+                <h3 className="text-xl font-bold text-white mb-1">{plan.name}</h3>
+                <Badge 
+                  variant="secondary" 
+                  className="bg-green-600/20 text-green-400 border-green-500/30"
+                >
+                  {plan.daily_profit_percentage || (plan.profit_percentage / 30).toFixed(2)}% Daily
+                </Badge>
               </div>
-              
-              <Button
-                onClick={investInPlan}
-                className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white"
-              >
-                <Bot className="h-4 w-4 mr-2" />
-                Start AI Trading
-              </Button>
-            </div>
-            
-            <div className="space-y-3">
-              <h3 className="font-semibold text-white">Investment Summary</h3>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Plan:</span>
-                  <span className="text-white">{selectedPlan.name}</span>
+
+              <div className="space-y-3 mb-6">
+                <div className="flex items-center space-x-2">
+                  <DollarSign className="h-4 w-4 text-gray-400" />
+                  <span className="text-gray-300 text-sm">
+                    ${Number(plan.min_amount).toLocaleString()} - ${Number(plan.max_amount).toLocaleString()}
+                  </span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Monthly Return:</span>
-                  <span className="text-green-400">{selectedPlan.profit_percentage}%</span>
+                
+                <div className="flex items-center space-x-2">
+                  <Clock className="h-4 w-4 text-gray-400" />
+                  <span className="text-gray-300 text-sm">{plan.duration_days} Days</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Duration:</span>
-                  <span className="text-white">{selectedPlan.duration_days} days</span>
+                
+                <div className="flex items-center space-x-2">
+                  <TrendingUp className="h-4 w-4 text-gray-400" />
+                  <span className="text-gray-300 text-sm">Auto Daily Profits</span>
                 </div>
-                {investmentAmount && (
-                  <>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Daily Profit:</span>
-                      <span className="text-green-400">
-                        ${((parseFloat(investmentAmount) * selectedPlan.profit_percentage / 100) / selectedPlan.duration_days).toFixed(2)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Total Return:</span>
-                      <span className="text-green-400">
-                        ${(parseFloat(investmentAmount) * (1 + selectedPlan.profit_percentage / 100)).toFixed(2)}
-                      </span>
-                    </div>
-                  </>
+              </div>
+
+              <p className="text-gray-400 text-sm mb-4">{plan.description}</p>
+
+              {plan.exchange_logos && (
+                <div className="mb-4">
+                  <p className="text-xs text-gray-500 mb-2">Supported Exchanges:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {plan.exchange_logos.map((exchange: string, index: number) => (
+                      <div key={index} className="flex items-center">
+                        <img 
+                          src="/placeholder.svg" 
+                          alt={exchange}
+                          className="w-4 h-4 mr-1 object-contain"
+                        />
+                        <Badge variant="outline" className="text-xs">
+                          {exchange}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="mb-4">
+                {balanceStatus.canActivate ? (
+                  <div className="flex items-center text-green-400 text-sm">
+                    <CheckCircle className="h-4 w-4 mr-1" />
+                    {balanceStatus.message}
+                  </div>
+                ) : (
+                  <div className="flex items-center text-red-400 text-sm">
+                    <AlertCircle className="h-4 w-4 mr-1" />
+                    {balanceStatus.message}
+                  </div>
                 )}
               </div>
-            </div>
-          </div>
-        </Card>
-      )}
+
+              <Button
+                onClick={() => {
+                  if (balanceStatus.canActivate) {
+                    activatePlanMutation.mutate(plan);
+                  }
+                }}
+                disabled={!balanceStatus.canActivate || activatePlanMutation.isPending}
+                className={`w-full ${
+                  balanceStatus.canActivate 
+                    ? 'bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700' 
+                    : 'bg-gray-600 cursor-not-allowed'
+                }`}
+              >
+                <Bot className="h-4 w-4 mr-2" />
+                {activatePlanMutation.isPending ? 'Activating...' : 
+                 balanceStatus.canActivate ? 'Activate Plan' : 'Insufficient Balance'}
+              </Button>
+            </Card>
+          );
+        })}
+      </div>
 
       {/* Active Investments */}
       {userInvestments && userInvestments.length > 0 && (

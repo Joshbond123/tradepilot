@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,7 +18,7 @@ export const AdminPlanManagement = () => {
     description: '',
     min_amount: '',
     max_amount: '',
-    profit_percentage: '',
+    daily_profit_percentage: '',
     duration_days: '',
     exchange_logos: ['binance', 'coinbase', 'kraken'],
     status: 'active'
@@ -57,7 +56,8 @@ export const AdminPlanManagement = () => {
           ...planData,
           min_amount: parseFloat(planData.min_amount),
           max_amount: parseFloat(planData.max_amount),
-          profit_percentage: parseFloat(planData.profit_percentage),
+          daily_profit_percentage: parseFloat(planData.daily_profit_percentage),
+          profit_percentage: parseFloat(planData.daily_profit_percentage) * 30, // Convert daily to monthly for compatibility
           duration_days: parseInt(planData.duration_days)
         }]);
       
@@ -75,7 +75,7 @@ export const AdminPlanManagement = () => {
         description: '',
         min_amount: '',
         max_amount: '',
-        profit_percentage: '',
+        daily_profit_percentage: '',
         duration_days: '',
         exchange_logos: ['binance', 'coinbase', 'kraken'],
         status: 'active'
@@ -98,7 +98,8 @@ export const AdminPlanManagement = () => {
           ...updates,
           min_amount: parseFloat(updates.min_amount),
           max_amount: parseFloat(updates.max_amount),
-          profit_percentage: parseFloat(updates.profit_percentage),
+          daily_profit_percentage: parseFloat(updates.daily_profit_percentage),
+          profit_percentage: parseFloat(updates.daily_profit_percentage) * 30, // Convert daily to monthly for compatibility
           duration_days: parseInt(updates.duration_days),
           updated_at: new Date().toISOString()
         })
@@ -207,7 +208,10 @@ export const AdminPlanManagement = () => {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => setEditingPlan(plan)}
+                      onClick={() => setEditingPlan({
+                        ...plan,
+                        daily_profit_percentage: plan.daily_profit_percentage || (plan.profit_percentage / 30).toFixed(2)
+                      })}
                       className="border-gray-600 text-gray-400 hover:text-white"
                     >
                       <Edit className="h-3 w-3" />
@@ -222,7 +226,7 @@ export const AdminPlanManagement = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
                   <div className="bg-gray-700/30 p-3 rounded-lg">
                     <p className="text-gray-400 text-sm">Min Amount</p>
                     <p className="text-white font-semibold">${Number(plan.min_amount).toLocaleString()}</p>
@@ -232,12 +236,16 @@ export const AdminPlanManagement = () => {
                     <p className="text-white font-semibold">${Number(plan.max_amount).toLocaleString()}</p>
                   </div>
                   <div className="bg-gray-700/30 p-3 rounded-lg">
-                    <p className="text-gray-400 text-sm">Profit</p>
-                    <p className="text-green-400 font-semibold">{plan.profit_percentage}%</p>
+                    <p className="text-gray-400 text-sm">Daily Profit</p>
+                    <p className="text-green-400 font-semibold">{plan.daily_profit_percentage || (plan.profit_percentage / 30).toFixed(2)}%</p>
                   </div>
                   <div className="bg-gray-700/30 p-3 rounded-lg">
                     <p className="text-gray-400 text-sm">Duration</p>
                     <p className="text-white font-semibold">{plan.duration_days} days</p>
+                  </div>
+                  <div className="bg-gray-700/30 p-3 rounded-lg">
+                    <p className="text-gray-400 text-sm">Monthly Total</p>
+                    <p className="text-blue-400 font-semibold">{plan.profit_percentage}%</p>
                   </div>
                 </div>
 
@@ -272,6 +280,7 @@ export const AdminPlanManagement = () => {
                 <Input
                   value={newPlan.name}
                   onChange={(e) => setNewPlan({...newPlan, name: e.target.value})}
+                  placeholder="e.g., Alpha Neural Trader"
                   className="bg-gray-700/50 border-gray-600 text-white"
                 />
               </div>
@@ -305,12 +314,12 @@ export const AdminPlanManagement = () => {
                 />
               </div>
               <div>
-                <Label className="text-gray-300">Profit Percentage (%)</Label>
+                <Label className="text-gray-300">Daily Profit Percentage (%)</Label>
                 <Input
                   type="number"
-                  step="0.1"
-                  value={newPlan.profit_percentage}
-                  onChange={(e) => setNewPlan({...newPlan, profit_percentage: e.target.value})}
+                  step="0.01"
+                  value={newPlan.daily_profit_percentage}
+                  onChange={(e) => setNewPlan({...newPlan, daily_profit_percentage: e.target.value})}
                   className="bg-gray-700/50 border-gray-600 text-white"
                 />
               </div>
@@ -328,6 +337,7 @@ export const AdminPlanManagement = () => {
                 <Textarea
                   value={newPlan.description}
                   onChange={(e) => setNewPlan({...newPlan, description: e.target.value})}
+                  placeholder="Professional AI-powered trading strategy..."
                   className="bg-gray-700/50 border-gray-600 text-white"
                   rows={3}
                 />
@@ -397,12 +407,12 @@ export const AdminPlanManagement = () => {
                 />
               </div>
               <div>
-                <Label className="text-gray-300">Profit Percentage (%)</Label>
+                <Label className="text-gray-300">Daily Profit Percentage (%)</Label>
                 <Input
                   type="number"
-                  step="0.1"
-                  value={editingPlan.profit_percentage}
-                  onChange={(e) => setEditingPlan({...editingPlan, profit_percentage: e.target.value})}
+                  step="0.01"
+                  value={editingPlan.daily_profit_percentage}
+                  onChange={(e) => setEditingPlan({...editingPlan, daily_profit_percentage: e.target.value})}
                   className="bg-gray-700/50 border-gray-600 text-white"
                 />
               </div>
