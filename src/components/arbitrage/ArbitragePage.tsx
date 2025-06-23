@@ -33,11 +33,11 @@ export const ArbitragePage = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   const exchanges = [
-    { name: 'Binance', logo: '/placeholder.svg' },
-    { name: 'Coinbase', logo: '/placeholder.svg' },
-    { name: 'Kraken', logo: '/placeholder.svg' },
-    { name: 'Huobi', logo: '/placeholder.svg' },
-    { name: 'OKX', logo: '/placeholder.svg' }
+    { name: 'Binance', logo: '/lovable-uploads/b7657bba-7cf8-4a24-a064-3f3a59193299.png' },
+    { name: 'Coinbase', logo: '/lovable-uploads/e50e50af-d1d9-4edc-abb0-2ed5ddbc145f.png' },
+    { name: 'Kraken', logo: '/lovable-uploads/587fa5d4-f7b9-4420-8311-0e79d177af0b.png' },
+    { name: 'Huobi', logo: '/lovable-uploads/d135e250-6557-4e7a-8d9b-19075d4f108a.png' },
+    { name: 'OKX', logo: '/lovable-uploads/82036cc7-571a-47d0-ae10-687c051f3b34.png' }
   ];
 
   const fetchCryptoPrices = async () => {
@@ -48,7 +48,7 @@ export const ArbitragePage = () => {
       const data = await response.json();
       setCryptoPairs(data);
       
-      // Generate arbitrage opportunities
+      // Generate arbitrage opportunities with correct profit calculation
       const opportunities = data.map((crypto: CryptoPair) => {
         const basePrice = crypto.current_price;
         const buyExchange = exchanges[Math.floor(Math.random() * exchanges.length)];
@@ -56,7 +56,7 @@ export const ArbitragePage = () => {
         
         const buyPrice = basePrice * (0.98 + Math.random() * 0.02); // Slightly lower
         const sellPrice = basePrice * (1.01 + Math.random() * 0.02); // Slightly higher
-        const profitUSD = (sellPrice - buyPrice) * 100; // Assuming 100 units traded
+        const profitUSD = sellPrice - buyPrice; // Price gap between exchanges
         
         return {
           crypto,
@@ -201,7 +201,7 @@ export const ArbitragePage = () => {
                     </p>
                     <div className="flex items-center text-sm text-gray-400">
                       <ArrowRight className="h-4 w-4 mr-1" />
-                      Per 100 units
+                      Price Gap
                     </div>
                   </div>
                 </div>

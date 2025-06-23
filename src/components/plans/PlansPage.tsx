@@ -152,6 +152,14 @@ export const PlansPage = () => {
     };
   };
 
+  const exchangeLogos = [
+    '/lovable-uploads/b7657bba-7cf8-4a24-a064-3f3a59193299.png', // Binance
+    '/lovable-uploads/e50e50af-d1d9-4edc-abb0-2ed5ddbc145f.png', // Coinbase
+    '/lovable-uploads/587fa5d4-f7b9-4420-8311-0e79d177af0b.png', // Kraken
+    '/lovable-uploads/d135e250-6557-4e7a-8d9b-19075d4f108a.png', // Huobi
+    '/lovable-uploads/82036cc7-571a-47d0-ae10-687c051f3b34.png'  // OKX
+  ];
+
   return (
     <div className="p-4 md:p-6 space-y-6">
       <div className="text-center mb-8">
@@ -218,25 +226,19 @@ export const PlansPage = () => {
 
               <p className="text-gray-400 text-sm mb-4">{plan.description}</p>
 
-              {plan.exchange_logos && (
-                <div className="mb-4">
-                  <p className="text-xs text-gray-500 mb-2">Supported Exchanges:</p>
-                  <div className="flex flex-wrap gap-2">
-                    {plan.exchange_logos.map((exchange: string, index: number) => (
-                      <div key={index} className="flex items-center">
-                        <img 
-                          src="/placeholder.svg" 
-                          alt={exchange}
-                          className="w-4 h-4 mr-1 object-contain"
-                        />
-                        <Badge variant="outline" className="text-xs">
-                          {exchange}
-                        </Badge>
-                      </div>
-                    ))}
-                  </div>
+              <div className="mb-4">
+                <p className="text-xs text-gray-500 mb-2">Supported Exchanges:</p>
+                <div className="flex flex-wrap gap-2">
+                  {exchangeLogos.slice(0, 3).map((logo, index) => (
+                    <img 
+                      key={index}
+                      src={logo} 
+                      alt={`Exchange ${index + 1}`}
+                      className="w-6 h-6 object-contain"
+                    />
+                  ))}
                 </div>
-              )}
+              </div>
 
               <div className="mb-4">
                 {balanceStatus.canActivate ? (

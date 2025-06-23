@@ -31,9 +31,24 @@ export const DepositPage = () => {
   const currentWallet = walletAddresses?.find(w => w.crypto_type === selectedCrypto);
 
   const cryptoOptions = [
-    { id: 'BTC', name: 'Bitcoin', icon: '₿', color: 'text-orange-400' },
-    { id: 'ETH', name: 'Ethereum', icon: 'Ξ', color: 'text-blue-400' },
-    { id: 'USDT', name: 'Tether (TRC-20)', icon: '₮', color: 'text-green-400' },
+    { 
+      id: 'BTC', 
+      name: 'Bitcoin', 
+      icon: '/lovable-uploads/400b72ed-f1cc-4cbc-b306-57a126c721d3.png', 
+      color: 'text-orange-400' 
+    },
+    { 
+      id: 'ETH', 
+      name: 'Ethereum', 
+      icon: '/lovable-uploads/b42b8250-4f13-4b81-bc4f-52c43df7f07e.png', 
+      color: 'text-blue-400' 
+    },
+    { 
+      id: 'USDT', 
+      name: 'Tether (TRC-20)', 
+      icon: '/lovable-uploads/400b72ed-f1cc-4cbc-b306-57a126c721d3.png', 
+      color: 'text-green-400' 
+    },
   ];
 
   const copyToClipboard = (text: string) => {
@@ -108,7 +123,7 @@ export const DepositPage = () => {
                 }`}
               >
                 <div className="flex items-center space-x-3">
-                  <span className={`text-2xl ${crypto.color}`}>{crypto.icon}</span>
+                  <img src={crypto.icon} alt={crypto.name} className="w-8 h-8 object-contain" />
                   <div className="text-left">
                     <p className="font-semibold text-white">{crypto.name}</p>
                     <p className="text-sm text-gray-400">{crypto.id}</p>
