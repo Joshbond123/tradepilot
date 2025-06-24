@@ -13,8 +13,11 @@ export const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [username, setUsername] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -39,12 +42,17 @@ export const AuthPage = () => {
         
         navigate('/dashboard');
       } else {
+        if (password !== confirmPassword) {
+          throw new Error("Passwords do not match");
+        }
+
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             data: {
               full_name: fullName,
+              username: username,
             }
           }
         });
@@ -53,8 +61,10 @@ export const AuthPage = () => {
         
         toast({
           title: "Account created!",
-          description: "Welcome to TradePilot AI. Please check your email to verify your account.",
+          description: "Welcome to TradePilot AI. You can now log in.",
         });
+        
+        setIsLogin(true);
       }
     } catch (error: any) {
       toast({
@@ -97,18 +107,33 @@ export const AuthPage = () => {
         <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm p-6">
           <form onSubmit={handleAuth} className="space-y-4">
             {!isLogin && (
-              <div className="space-y-2">
-                <Label htmlFor="fullName" className="text-gray-300">Full Name</Label>
-                <Input
-                  id="fullName"
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Enter your full name"
-                  className="bg-gray-700/50 border-gray-600 text-white placeholder-gray-400"
-                  required={!isLogin}
-                />
-              </div>
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="fullName" className="text-gray-300">Full Name</Label>
+                  <Input
+                    id="fullName"
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="Enter your full name"
+                    className="bg-gray-700/50 border-gray-600 text-white placeholder-gray-400"
+                    required={!isLogin}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="username" className="text-gray-300">Username</Label>
+                  <Input
+                    id="username"
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="Enter your username"
+                    className="bg-gray-700/50 border-gray-600 text-white placeholder-gray-400"
+                    required={!isLogin}
+                  />
+                </div>
+              </>
             )}
             
             <div className="space-y-2">
@@ -148,6 +173,33 @@ export const AuthPage = () => {
                 </Button>
               </div>
             </div>
+
+            {!isLogin && (
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword" className="text-gray-300">Confirm Password</Label>
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Confirm your password"
+                    className="bg-gray-700/50 border-gray-600 text-white placeholder-gray-400 pr-10"
+                    required={!isLogin}
+                    minLength={6}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 text-gray-400 hover:text-white"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  >
+                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
+                </div>
+              </div>
+            )}
             
             <Button
               type="submit"

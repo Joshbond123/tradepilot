@@ -61,15 +61,17 @@ export const DashboardHome = () => {
     refetchInterval: 4000,
   });
 
+  const displayName = profile?.username || profile?.full_name || user?.email || 'User';
+
   return (
     <div className="p-4 md:p-6 space-y-6">
       {/* Welcome Section */}
       <div className="bg-gradient-to-r from-blue-900/50 to-green-900/50 rounded-xl p-6 border border-blue-500/30">
         <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">
-          Welcome back, {profile?.full_name || user?.email}!
+          Welcome back, {displayName}!
         </h1>
         <p className="text-gray-300">
-          Your AI trading portfolio is performing excellently. Keep monitoring your investments.
+          Access your portfolio insights and recent activity below.
         </p>
       </div>
 
@@ -81,10 +83,6 @@ export const DashboardHome = () => {
               <p className="text-gray-400 text-sm">Total Balance</p>
               <p className="text-2xl font-bold text-white">
                 ${profile?.balance ? Number(profile.balance).toFixed(2) : '0.00'}
-              </p>
-              <p className="text-green-400 text-sm flex items-center mt-1">
-                <ArrowUpRight className="h-3 w-3 mr-1" />
-                +2.5% today
               </p>
             </div>
             <Wallet className="h-8 w-8 text-blue-400" />

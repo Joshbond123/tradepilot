@@ -4,9 +4,8 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
-import { Settings, User, Shield, Bell, Palette, Save } from 'lucide-react';
+import { User, Shield, Save } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
@@ -14,13 +13,11 @@ import { useToast } from '@/components/ui/use-toast';
 export const SettingsPage = () => {
   const [user, setUser] = useState<any>(null);
   const [fullName, setFullName] = useState('');
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
-  const [notifications, setNotifications] = useState({
-    email: true,
-    browser: true,
-    trading: true,
-    security: true,
-  });
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -53,6 +50,7 @@ export const SettingsPage = () => {
   useEffect(() => {
     if (profile) {
       setFullName(profile.full_name || '');
+      setUsername(profile.username || '');
     }
   }, [profile]);
 
@@ -64,6 +62,7 @@ export const SettingsPage = () => {
         .from('profiles')
         .update({
           full_name: fullName.trim(),
+          username: username.trim(),
           updated_at: new Date().toISOString(),
         })
         .eq('id', user.id);
@@ -84,11 +83,46 @@ export const SettingsPage = () => {
   };
 
   const updatePassword = async () => {
-    // This would typically open a password reset flow
-    toast({
-      title: "Password Reset",
-      description: "Check your email for password reset instructions",
-    });
+    if (!currentPassword || !newPassword || !confirmNewPassword) {
+      toast({
+        title: "Error",
+        description: "Please fill in all password fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      toast({
+        title: "Error",
+        description: "New passwords do not match",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Password Updated",
+        description: "Your password has been updated successfully",
+      });
+
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmNewPassword('');
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -119,30 +153,26 @@ export const SettingsPage = () => {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-gray-300">Email Address</Label>
+              <Label htmlFor="username" className="text-gray-300">Username</Label>
               <Input
-                id="email"
-                value={email}
-                readOnly
-                className="bg-gray-700/30 border-gray-600 text-gray-400"
+                id="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Enter your username"
+                className="bg-gray-700/50 border-gray-600 text-white"
               />
-              <p className="text-xs text-gray-500">Contact support to change your email</p>
             </div>
           </div>
-          
-          <div className="mt-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-300">Referral Code</p>
-                <p className="text-lg font-mono font-semibold text-blue-400">
-                  {profile?.referral_code || 'Loading...'}
-                </p>
-              </div>
-              <div>
-                <p className="text-gray-300">Account Status</p>
-                <p className="text-green-400 font-semibold">Active</p>
-              </div>
-            </div>
+
+          <div className="mt-4 space-y-2">
+            <Label htmlFor="email" className="text-gray-300">Email Address</Label>
+            <Input
+              id="email"
+              value={email}
+              readOnly
+              className="bg-gray-700/30 border-gray-600 text-gray-400"
+            />
+            <p className="text-xs text-gray-500">Contact support to change your email</p>
           </div>
           
           <Separator className="my-6 bg-gray-700" />
@@ -166,115 +196,52 @@ export const SettingsPage = () => {
           </div>
           
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-gray-700/30 rounded-lg">
-              <div>
-                <p className="font-semibold text-white">Password</p>
-                <p className="text-sm text-gray-400">Change your account password</p>
-              </div>
-              <Button
-                onClick={updatePassword}
-                variant="outline"
-                className="border-gray-600 text-gray-400 hover:text-white"
-              >
-                Change Password
-              </Button>
+            <div className="space-y-2">
+              <Label htmlFor="currentPassword" className="text-gray-300">Current Password</Label>
+              <Input
+                id="currentPassword"
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                placeholder="Enter your current password"
+                className="bg-gray-700/50 border-gray-600 text-white"
+              />
             </div>
             
-            <div className="flex items-center justify-between p-4 bg-gray-700/30 rounded-lg">
-              <div>
-                <p className="font-semibold text-white">Two-Factor Authentication</p>
-                <p className="text-sm text-gray-400">Add an extra layer of security to your account</p>
-              </div>
-              <Switch />
+            <div className="space-y-2">
+              <Label htmlFor="newPassword" className="text-gray-300">New Password</Label>
+              <Input
+                id="newPassword"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Enter your new password"
+                className="bg-gray-700/50 border-gray-600 text-white"
+              />
             </div>
-          </div>
-        </Card>
-
-        {/* Notification Settings */}
-        <Card className="bg-gray-800/50 border-gray-700 p-6">
-          <div className="flex items-center space-x-2 mb-6">
-            <Bell className="h-6 w-6 text-yellow-400" />
-            <h2 className="text-xl font-bold text-white">Notifications</h2>
+            
+            <div className="space-y-2">
+              <Label htmlFor="confirmNewPassword" className="text-gray-300">Confirm New Password</Label>
+              <Input
+                id="confirmNewPassword"
+                type="password"
+                value={confirmNewPassword}
+                onChange={(e) => setConfirmNewPassword(e.target.value)}
+                placeholder="Confirm your new password"
+                className="bg-gray-700/50 border-gray-600 text-white"
+              />
+            </div>
           </div>
           
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-gray-700/30 rounded-lg">
-              <div>
-                <p className="font-semibold text-white">Email Notifications</p>
-                <p className="text-sm text-gray-400">Receive notifications via email</p>
-              </div>
-              <Switch
-                checked={notifications.email}
-                onCheckedChange={(checked) => 
-                  setNotifications(prev => ({ ...prev, email: checked }))
-                }
-              />
-            </div>
-            
-            <div className="flex items-center justify-between p-4 bg-gray-700/30 rounded-lg">
-              <div>
-                <p className="font-semibold text-white">Browser Notifications</p>
-                <p className="text-sm text-gray-400">Receive push notifications in your browser</p>
-              </div>
-              <Switch
-                checked={notifications.browser}
-                onCheckedChange={(checked) => 
-                  setNotifications(prev => ({ ...prev, browser: checked }))
-                }
-              />
-            </div>
-            
-            <div className="flex items-center justify-between p-4 bg-gray-700/30 rounded-lg">
-              <div>
-                <p className="font-semibold text-white">Trading Alerts</p>
-                <p className="text-sm text-gray-400">Get notified about trading activities and profits</p>
-              </div>
-              <Switch
-                checked={notifications.trading}
-                onCheckedChange={(checked) => 
-                  setNotifications(prev => ({ ...prev, trading: checked }))
-                }
-              />
-            </div>
-            
-            <div className="flex items-center justify-between p-4 bg-gray-700/30 rounded-lg">
-              <div>
-                <p className="font-semibold text-white">Security Alerts</p>
-                <p className="text-sm text-gray-400">Important security notifications and login alerts</p>
-              </div>
-              <Switch
-                checked={notifications.security}
-                onCheckedChange={(checked) => 
-                  setNotifications(prev => ({ ...prev, security: checked }))
-                }
-              />
-            </div>
-          </div>
-        </Card>
-
-        {/* Appearance Settings */}
-        <Card className="bg-gray-800/50 border-gray-700 p-6">
-          <div className="flex items-center space-x-2 mb-6">
-            <Palette className="h-6 w-6 text-purple-400" />
-            <h2 className="text-xl font-bold text-white">Appearance</h2>
-          </div>
+          <Separator className="my-6 bg-gray-700" />
           
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-gray-700/30 rounded-lg">
-              <div>
-                <p className="font-semibold text-white">Theme</p>
-                <p className="text-sm text-gray-400">Currently using dark theme</p>
-              </div>
-              <div className="text-blue-400 font-semibold">Dark Mode</div>
-            </div>
-            
-            <div className="flex items-center justify-between p-4 bg-gray-700/30 rounded-lg">
-              <div>
-                <p className="font-semibold text-white">Language</p>
-                <p className="text-sm text-gray-400">Choose your preferred language</p>
-              </div>
-              <div className="text-blue-400 font-semibold">English</div>
-            </div>
+          <div className="flex justify-end">
+            <Button
+              onClick={updatePassword}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              Update Password
+            </Button>
           </div>
         </Card>
       </div>

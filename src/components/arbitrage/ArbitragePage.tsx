@@ -119,35 +119,6 @@ export const ArbitragePage = () => {
         )}
       </Card>
 
-      {/* Exchange Prices */}
-      <Card className="bg-gray-800/50 border-gray-700 p-6">
-        <h2 className="text-xl font-bold text-white mb-4">Exchange Prices</h2>
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          {exchanges.map((exchange, index) => (
-            <div key={exchange.name} className="bg-gray-700/30 p-4 rounded-lg text-center">
-              <div className="flex items-center justify-center mb-2">
-                <img 
-                  src={exchange.logo} 
-                  alt={exchange.name}
-                  className="w-8 h-8 mr-2 object-contain"
-                />
-                <span className="text-white font-semibold">{exchange.name}</span>
-              </div>
-              {cryptoPairs.length > 0 && (
-                <div className="space-y-1">
-                  {cryptoPairs.slice(0, 3).map((crypto) => (
-                    <div key={crypto.id} className="text-sm">
-                      <span className="text-gray-400">{crypto.symbol.toUpperCase()}: </span>
-                      <span className="text-green-400">${(crypto.current_price * (0.99 + Math.random() * 0.02)).toFixed(6)}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </Card>
-
       {/* Arbitrage Opportunities */}
       <Card className="bg-gray-800/50 border-gray-700 p-6">
         <h2 className="text-xl font-bold text-white mb-4">Arbitrage Opportunities</h2>

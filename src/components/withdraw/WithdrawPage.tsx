@@ -59,13 +59,13 @@ export const WithdrawPage = () => {
     { 
       id: 'BTC', 
       name: 'Bitcoin', 
-      min: 0.001,
+      min: 10,
       icon: 'https://assets.coingecko.com/coins/images/1/large/bitcoin.png?1547033579'
     },
     { 
       id: 'ETH', 
       name: 'Ethereum', 
-      min: 0.01,
+      min: 10,
       icon: 'https://assets.coingecko.com/coins/images/279/large/ethereum.png?1595348880'
     },
     { 
@@ -102,7 +102,7 @@ export const WithdrawPage = () => {
     if (withdrawAmount < minAmount) {
       toast({
         title: "Amount Too Low",
-        description: `Minimum withdrawal amount is ${minAmount} ${selectedCrypto}`,
+        description: `Minimum withdrawal amount is $${minAmount} USD`,
         variant: "destructive",
       });
       return;
@@ -185,18 +185,18 @@ export const WithdrawPage = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="amount" className="text-gray-300">Amount ({selectedCrypto})</Label>
+              <Label htmlFor="amount" className="text-gray-300">Enter Amount in $ USD</Label>
               <Input
                 id="amount"
                 type="number"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                placeholder="Enter withdrawal amount"
+                placeholder="Enter withdrawal amount in USD"
                 className="bg-gray-700/50 border-gray-600 text-white"
-                step="0.00000001"
+                step="0.01"
               />
               <p className="text-xs text-gray-400">
-                Min: {cryptoOptions.find(c => c.id === selectedCrypto)?.min} {selectedCrypto}
+                Min: ${cryptoOptions.find(c => c.id === selectedCrypto)?.min} USD
               </p>
             </div>
 
@@ -247,7 +247,7 @@ export const WithdrawPage = () => {
                   <div className="flex justify-between items-start">
                     <div>
                       <p className="font-semibold text-white">
-                        {withdrawal.amount} {withdrawal.crypto_type}
+                        ${withdrawal.amount} USD ({withdrawal.crypto_type})
                       </p>
                       <p className="text-sm text-gray-400">
                         To: {withdrawal.destination_address.slice(0, 10)}...{withdrawal.destination_address.slice(-6)}
