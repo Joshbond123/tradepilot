@@ -153,7 +153,7 @@ export const LandingPage = () => {
                 onClick={() => navigate('/login')}
                 className="bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 text-lg px-8 py-4 transition-all duration-300 hover:scale-105 hover:shadow-lg"
               >
-                Start Trading with AI
+                Start Trading Now
                 <ChevronRight className="ml-2 h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
               </Button>
             </div>
@@ -179,9 +179,11 @@ export const LandingPage = () => {
             {aiFeatures.map((feature, index) => (
               <Card 
                 key={index}
-                className={`bg-gray-800/50 border-gray-700 p-6 hover:bg-gray-800/70 transition-all duration-500 hover:scale-105 hover:shadow-xl`}
+                className={`bg-gray-800/50 border-gray-700 p-6 hover:bg-gray-800/70 transition-all duration-500 hover:scale-105 hover:shadow-xl ${
+                  isVisible ? 'animate-fade-in' : 'opacity-0'
+                }`}
                 style={{
-                  animation: isVisible ? `fadeInUp 0.8s ease-out ${feature.delay} both` : 'none'
+                  animationDelay: isVisible ? feature.delay : '0ms'
                 }}
               >
                 <div className="text-center">
@@ -215,9 +217,11 @@ export const LandingPage = () => {
             {stats.map((stat, index) => (
               <div 
                 key={index}
-                className={`text-center group transition-all duration-500 hover:scale-105`}
+                className={`text-center group transition-all duration-500 hover:scale-105 ${
+                  isVisible ? 'animate-fade-in' : 'opacity-0'
+                }`}
                 style={{
-                  animation: isVisible ? `fadeInUp 0.8s ease-out ${stat.delay} both` : 'none'
+                  animationDelay: isVisible ? stat.delay : '0ms'
                 }}
               >
                 <div className="bg-gradient-to-r from-blue-600/10 to-green-600/10 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 transition-all duration-300 group-hover:from-blue-600/20 group-hover:to-green-600/20">
@@ -317,7 +321,7 @@ export const LandingPage = () => {
               onClick={() => navigate('/login')}
               className="bg-white text-blue-900 hover:bg-gray-100 text-lg px-8 py-4 transition-all duration-300 hover:scale-105 hover:shadow-lg"
             >
-              Start Trading Now
+              Login / Sign Up
               <ChevronRight className="ml-2 h-5 w-5" />
             </Button>
           </div>
@@ -331,19 +335,6 @@ export const LandingPage = () => {
           onClose={() => setShowAdminAuth(false)}
         />
       )}
-
-      <style jsx>{`
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `}</style>
     </div>
   );
 };
