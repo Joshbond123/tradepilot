@@ -175,6 +175,7 @@ export type Database = {
           referral_earnings: number | null
           referred_by: string | null
           updated_at: string | null
+          username: string | null
         }
         Insert: {
           balance?: number | null
@@ -187,6 +188,7 @@ export type Database = {
           referral_earnings?: number | null
           referred_by?: string | null
           updated_at?: string | null
+          username?: string | null
         }
         Update: {
           balance?: number | null
@@ -199,6 +201,7 @@ export type Database = {
           referral_earnings?: number | null
           referred_by?: string | null
           updated_at?: string | null
+          username?: string | null
         }
         Relationships: [
           {

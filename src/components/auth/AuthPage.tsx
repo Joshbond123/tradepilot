@@ -1,75 +1,149 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Bot, Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 
 export const AuthPage = () => {
-  const [isLogin, setIsLogin] = useState(true);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  
+  // Login states
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  
+  // Registration states
+  const [fullName, setFullName] = useState('');
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [fullName, setFullName] = useState('');
-  const [username, setUsername] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
-  const { toast } = useToast();
 
-  const handleAuth = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        
-        if (error) throw error;
-        
-        toast({
-          title: "Welcome back!",
-          description: "Successfully logged in to TradePilot AI.",
-        });
-        
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
         navigate('/dashboard');
-      } else {
-        if (password !== confirmPassword) {
-          throw new Error("Passwords do not match");
-        }
+      }
+    };
+    checkAuth();
+  }, [navigate]);
 
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              full_name: fullName,
-              username: username,
-            }
-          }
-        });
-        
-        if (error) throw error;
-        
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!loginEmail || !loginPassword) {
+      toast({
+        title: "Error",
+        description: "Please fill in all fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: loginEmail,
+        password: loginPassword,
+      });
+
+      if (error) {
         toast({
-          title: "Account created!",
-          description: "Welcome to TradePilot AI. You can now log in.",
+          title: "Login Failed",
+          description: error.message,
+          variant: "destructive",
         });
-        
-        setIsLogin(true);
+      } else {
+        toast({
+          title: "Success",
+          description: "Logged in successfully!",
+        });
+        navigate('/dashboard');
       }
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message,
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!fullName || !username || !email || !password || !confirmPassword) {
+      toast({
+        title: "Error",
+        description: "Please fill in all fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      toast({
+        title: "Error",
+        description: "Passwords do not match",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (password.length < 6) {
+      toast({
+        title: "Error",
+        description: "Password must be at least 6 characters",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/dashboard`,
+          data: {
+            full_name: fullName,
+            username: username,
+          }
+        }
+      });
+
+      if (error) {
+        toast({
+          title: "Registration Failed",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: "Account created successfully! You can now log in.",
+        });
+        // Clear the form
+        setFullName('');
+        setUsername('');
+        setEmail('');
+        setPassword('');
+        setConfirmPassword('');
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
         variant: "destructive",
       });
     } finally {
@@ -78,152 +152,133 @@ export const AuthPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <Button
-            variant="ghost"
-            onClick={() => navigate('/')}
-            className="absolute top-4 left-4 text-gray-400 hover:text-white"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Home
-          </Button>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md bg-gray-800/50 border-gray-700">
+        <Tabs defaultValue="login" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 bg-gray-700">
+            <TabsTrigger value="login" className="data-[state=active]:bg-blue-600">Login</TabsTrigger>
+            <TabsTrigger value="register" className="data-[state=active]:bg-blue-600">Register</TabsTrigger>
+          </TabsList>
           
-          <div className="flex items-center justify-center space-x-2 mb-4">
-            <Bot className="h-8 w-8 text-blue-400" />
-            <span className="text-2xl font-bold text-white">TradePilot AI</span>
-          </div>
-          <h1 className="text-2xl font-bold text-white mb-2">
-            {isLogin ? 'Welcome Back' : 'Create Account'}
-          </h1>
-          <p className="text-gray-400">
-            {isLogin ? 'Sign in to your trading account' : 'Start your AI trading journey'}
-          </p>
-        </div>
-
-        {/* Auth Form */}
-        <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm p-6">
-          <form onSubmit={handleAuth} className="space-y-4">
-            {!isLogin && (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="fullName" className="text-gray-300">Full Name</Label>
-                  <Input
-                    id="fullName"
-                    type="text"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Enter your full name"
-                    className="bg-gray-700/50 border-gray-600 text-white placeholder-gray-400"
-                    required={!isLogin}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="username" className="text-gray-300">Username</Label>
-                  <Input
-                    id="username"
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="Enter your username"
-                    className="bg-gray-700/50 border-gray-600 text-white placeholder-gray-400"
-                    required={!isLogin}
-                  />
-                </div>
-              </>
-            )}
-            
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-gray-300">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
-                className="bg-gray-700/50 border-gray-600 text-white placeholder-gray-400"
-                required
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-gray-300">Password</Label>
-              <div className="relative">
+          <TabsContent value="login" className="p-6">
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="text-center mb-6">
+                <h2 className="text-2xl font-bold text-white">Welcome Back</h2>
+                <p className="text-gray-400">Sign in to your account</p>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="loginEmail" className="text-gray-300">Email</Label>
+                <Input
+                  id="loginEmail"
+                  type="email"
+                  value={loginEmail}
+                  onChange={(e) => setLoginEmail(e.target.value)}
+                  className="bg-gray-700/50 border-gray-600 text-white"
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="loginPassword" className="text-gray-300">Password</Label>
+                <Input
+                  id="loginPassword"
+                  type="password"
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  className="bg-gray-700/50 border-gray-600 text-white"
+                  required
+                />
+              </div>
+              
+              <Button 
+                type="submit" 
+                className="w-full bg-blue-600 hover:bg-blue-700"
+                disabled={isLoading}
+              >
+                {isLoading ? 'Signing In...' : 'Sign In'}
+              </Button>
+            </form>
+          </TabsContent>
+          
+          <TabsContent value="register" className="p-6">
+            <form onSubmit={handleRegister} className="space-y-4">
+              <div className="text-center mb-6">
+                <h2 className="text-2xl font-bold text-white">Create Account</h2>
+                <p className="text-gray-400">Join TradePilot AI today</p>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="fullName" className="text-gray-300">Full Name</Label>
+                <Input
+                  id="fullName"
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="bg-gray-700/50 border-gray-600 text-white"
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="username" className="text-gray-300">Username</Label>
+                <Input
+                  id="username"
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="bg-gray-700/50 border-gray-600 text-white"
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-gray-300">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="bg-gray-700/50 border-gray-600 text-white"
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-gray-300">Password</Label>
                 <Input
                   id="password"
-                  type={showPassword ? "text" : "password"}
+                  type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your password"
-                  className="bg-gray-700/50 border-gray-600 text-white placeholder-gray-400 pr-10"
+                  className="bg-gray-700/50 border-gray-600 text-white"
                   required
-                  minLength={6}
                 />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3 text-gray-400 hover:text-white"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
               </div>
-            </div>
-
-            {!isLogin && (
+              
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword" className="text-gray-300">Confirm Password</Label>
-                <div className="relative">
-                  <Input
-                    id="confirmPassword"
-                    type={showConfirmPassword ? "text" : "password"}
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Confirm your password"
-                    className="bg-gray-700/50 border-gray-600 text-white placeholder-gray-400 pr-10"
-                    required={!isLogin}
-                    minLength={6}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-0 top-0 h-full px-3 text-gray-400 hover:text-white"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  >
-                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </Button>
-                </div>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="bg-gray-700/50 border-gray-600 text-white"
+                  required
+                />
               </div>
-            )}
-            
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="w-full bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 text-white"
-            >
-              {isLoading ? 'Processing...' : (isLogin ? 'Sign In' : 'Create Account')}
-            </Button>
-          </form>
-          
-          <div className="mt-6 text-center">
-            <p className="text-gray-400">
-              {isLogin ? "Don't have an account?" : "Already have an account?"}
-              <Button
-                variant="link"
-                onClick={() => setIsLogin(!isLogin)}
-                className="text-blue-400 hover:text-blue-300 ml-1 p-0"
+              
+              <Button 
+                type="submit" 
+                className="w-full bg-green-600 hover:bg-green-700"
+                disabled={isLoading}
               >
-                {isLogin ? 'Sign up' : 'Sign in'}
+                {isLoading ? 'Creating Account...' : 'Create Account'}
               </Button>
-            </p>
-          </div>
-        </Card>
-      </div>
+            </form>
+          </TabsContent>
+        </Tabs>
+      </Card>
     </div>
   );
 };
