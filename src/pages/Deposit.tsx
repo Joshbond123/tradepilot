@@ -1,12 +1,12 @@
 
 import React from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { DepositPage } from '@/components/deposit/DepositPage';
+import { EnhancedDepositPage } from '@/components/deposit/EnhancedDepositPage';
 
 const Deposit = () => {
   return (
     <DashboardLayout>
-      <DepositPage />
+      <EnhancedDepositPage />
     </DashboardLayout>
   );
 };

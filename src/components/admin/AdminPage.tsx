@@ -1,22 +1,23 @@
+
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Shield, Users, Wallet, Settings, TrendingUp, ArrowLeft, LogOut, Database, DollarSign } from 'lucide-react';
+import { Shield, Users, Wallet, Settings, TrendingUp, ArrowLeft, LogOut, Database, DollarSign, MessageSquare, Download, Upload } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
-import { AdminUserManagement } from './AdminUserManagement';
-import { AdminPlanManagement } from './AdminPlanManagement';
+import { AdminEnhancedUserManagement } from './AdminEnhancedUserManagement';
+import { AdminEnhancedPlanManagement } from './AdminEnhancedPlanManagement';
 import { AdminTransactionManagement } from './AdminTransactionManagement';
-import { AdminSystemSettings } from './AdminSystemSettings';
+import { AdminEnhancedSystemSettings } from './AdminEnhancedSystemSettings';
+import { AdminSupportTickets } from './AdminSupportTickets';
 
 export const AdminPage = () => {
   const navigate = useNavigate();
   const { logout } = useAdminAuth();
-  const [selectedWithdrawal, setSelectedWithdrawal] = useState<any>(null);
 
   const { data: users } = useQuery({
     queryKey: ['admin-users'],
@@ -63,12 +64,12 @@ export const AdminPage = () => {
     },
   });
 
-  const { data: plans } = useQuery({
-    queryKey: ['admin-plans'],
+  const { data: supportTickets } = useQuery({
+    queryKey: ['admin-support-tickets-count'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('investment_plans')
-        .select('*')
+        .from('support_tickets')
+        .select('status')
         .order('created_at', { ascending: false });
       
       if (error) throw error;
@@ -102,7 +103,8 @@ export const AdminPage = () => {
         activeInvestments,
         totalInvestmentAmount,
         pendingWithdrawals: withdrawalsResult.data?.filter(w => w.status === 'pending').length || 0,
-        pendingDeposits: depositsResult.data?.filter(d => d.status === 'pending').length || 0
+        pendingDeposits: depositsResult.data?.filter(d => d.status === 'pending').length || 0,
+        openTickets: supportTickets?.filter(t => t.status === 'open').length || 0
       };
     },
   });
@@ -166,7 +168,7 @@ export const AdminPage = () => {
                 <p className="text-gray-400 text-sm">Pending Withdrawals</p>
                 <p className="text-2xl font-bold text-yellow-400">{platformStats?.pendingWithdrawals || 0}</p>
               </div>
-              <Wallet className="h-8 w-8 text-yellow-400" />
+              <Download className="h-8 w-8 text-yellow-400" />
             </div>
           </Card>
 
@@ -176,27 +178,27 @@ export const AdminPage = () => {
                 <p className="text-gray-400 text-sm">Pending Deposits</p>
                 <p className="text-2xl font-bold text-orange-400">{platformStats?.pendingDeposits || 0}</p>
               </div>
-              <TrendingUp className="h-8 w-8 text-orange-400" />
+              <Upload className="h-8 w-8 text-orange-400" />
             </div>
           </Card>
 
           <Card className="bg-gray-800/50 border-gray-700 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-400 text-sm">Total Deposits</p>
+                <p className="text-gray-400 text-sm">Open Tickets</p>
+                <p className="text-2xl font-bold text-red-400">{platformStats?.openTickets || 0}</p>
+              </div>
+              <MessageSquare className="h-8 w-8 text-red-400" />
+            </div>
+          </Card>
+
+          <Card className="bg-gray-800/50 border-gray-700 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-400 text-sm">Total Revenue</p>
                 <p className="text-2xl font-bold text-green-400">${(platformStats?.totalDeposits || 0).toLocaleString()}</p>
               </div>
               <DollarSign className="h-8 w-8 text-green-400" />
-            </div>
-          </Card>
-
-          <Card className="bg-gray-800/50 border-gray-700 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-400 text-sm">Total Withdrawals</p>
-                <p className="text-2xl font-bold text-red-400">${(platformStats?.totalWithdrawals || 0).toLocaleString()}</p>
-              </div>
-              <DollarSign className="h-8 w-8 text-red-400" />
             </div>
           </Card>
 
@@ -214,11 +216,12 @@ export const AdminPage = () => {
 
         {/* Enhanced Admin Tabs */}
         <Tabs defaultValue="overview" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-5 bg-gray-800/50">
+          <TabsList className="grid w-full grid-cols-6 bg-gray-800/50">
             <TabsTrigger value="overview" className="data-[state=active]:bg-blue-600">Overview</TabsTrigger>
             <TabsTrigger value="users" className="data-[state=active]:bg-blue-600">Users</TabsTrigger>
             <TabsTrigger value="transactions" className="data-[state=active]:bg-blue-600">Transactions</TabsTrigger>
             <TabsTrigger value="plans" className="data-[state=active]:bg-blue-600">Plans</TabsTrigger>
+            <TabsTrigger value="support" className="data-[state=active]:bg-blue-600">Support</TabsTrigger>
             <TabsTrigger value="settings" className="data-[state=active]:bg-blue-600">Settings</TabsTrigger>
           </TabsList>
 
@@ -278,7 +281,7 @@ export const AdminPage = () => {
 
           {/* Users Management */}
           <TabsContent value="users">
-            <AdminUserManagement />
+            <AdminEnhancedUserManagement />
           </TabsContent>
 
           {/* Transactions Management */}
@@ -288,12 +291,17 @@ export const AdminPage = () => {
 
           {/* Plans Management */}
           <TabsContent value="plans">
-            <AdminPlanManagement />
+            <AdminEnhancedPlanManagement />
+          </TabsContent>
+
+          {/* Support Tickets */}
+          <TabsContent value="support">
+            <AdminSupportTickets />
           </TabsContent>
 
           {/* System Settings */}
           <TabsContent value="settings">
-            <AdminSystemSettings />
+            <AdminEnhancedSystemSettings />
           </TabsContent>
         </Tabs>
       </div>

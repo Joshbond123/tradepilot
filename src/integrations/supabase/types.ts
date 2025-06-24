@@ -9,6 +9,96 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      admin_activity_logs: {
+        Row: {
+          action: string
+          admin_username: string
+          created_at: string | null
+          details: Json | null
+          id: string
+          ip_address: unknown | null
+          target_id: string | null
+          target_type: string | null
+        }
+        Insert: {
+          action: string
+          admin_username: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Update: {
+          action?: string
+          admin_username?: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Relationships: []
+      }
+      admin_message_templates: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          message_type: Database["public"]["Enums"]["admin_message_type"]
+          subject: string
+          updated_at: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          message_type: Database["public"]["Enums"]["admin_message_type"]
+          subject: string
+          updated_at?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          message_type?: Database["public"]["Enums"]["admin_message_type"]
+          subject?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      admin_settings: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          setting_key: string
+          setting_value: Json
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          setting_key: string
+          setting_value: Json
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          setting_key?: string
+          setting_value?: Json
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       admin_users: {
         Row: {
           created_at: string | null
@@ -80,13 +170,36 @@ export type Database = {
           },
         ]
       }
+      exchange_logos: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          logo_url: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          logo_url: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string
+          name?: string
+        }
+        Relationships: []
+      }
       investment_plans: {
         Row: {
           created_at: string | null
           daily_profit_percentage: number | null
           description: string | null
           duration_days: number
-          exchange_logos: string[] | null
           id: string
           max_amount: number
           min_amount: number
@@ -100,7 +213,6 @@ export type Database = {
           daily_profit_percentage?: number | null
           description?: string | null
           duration_days: number
-          exchange_logos?: string[] | null
           id?: string
           max_amount: number
           min_amount: number
@@ -114,7 +226,6 @@ export type Database = {
           daily_profit_percentage?: number | null
           description?: string | null
           duration_days?: number
-          exchange_logos?: string[] | null
           id?: string
           max_amount?: number
           min_amount?: number
@@ -159,6 +270,42 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plan_exchange_logos: {
+        Row: {
+          created_at: string | null
+          exchange_logo_id: string
+          id: string
+          plan_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          exchange_logo_id: string
+          id?: string
+          plan_id: string
+        }
+        Update: {
+          created_at?: string | null
+          exchange_logo_id?: string
+          id?: string
+          plan_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_exchange_logos_exchange_logo_id_fkey"
+            columns: ["exchange_logo_id"]
+            isOneToOne: false
+            referencedRelation: "exchange_logos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_exchange_logos_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "investment_plans"
             referencedColumns: ["id"]
           },
         ]
@@ -213,6 +360,30 @@ export type Database = {
           },
         ]
       }
+      recaptcha_settings: {
+        Row: {
+          id: string
+          is_enabled: boolean | null
+          secret_key: string | null
+          site_key: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          is_enabled?: boolean | null
+          secret_key?: string | null
+          site_key?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          is_enabled?: boolean | null
+          secret_key?: string | null
+          site_key?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       referral_earnings: {
         Row: {
           amount: number
@@ -258,9 +429,12 @@ export type Database = {
       support_tickets: {
         Row: {
           admin_reply: string | null
+          assigned_admin_id: string | null
           created_at: string | null
           id: string
           message: string
+          priority: string | null
+          resolved_at: string | null
           status: Database["public"]["Enums"]["ticket_status"] | null
           subject: string
           updated_at: string | null
@@ -268,9 +442,12 @@ export type Database = {
         }
         Insert: {
           admin_reply?: string | null
+          assigned_admin_id?: string | null
           created_at?: string | null
           id?: string
           message: string
+          priority?: string | null
+          resolved_at?: string | null
           status?: Database["public"]["Enums"]["ticket_status"] | null
           subject: string
           updated_at?: string | null
@@ -278,9 +455,12 @@ export type Database = {
         }
         Update: {
           admin_reply?: string | null
+          assigned_admin_id?: string | null
           created_at?: string | null
           id?: string
           message?: string
+          priority?: string | null
+          resolved_at?: string | null
           status?: Database["public"]["Enums"]["ticket_status"] | null
           subject?: string
           updated_at?: string | null
@@ -371,6 +551,44 @@ export type Database = {
           },
         ]
       }
+      user_notifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          message: string
+          title: string
+          type: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message: string
+          title: string
+          type?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          title?: string
+          type?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wallet_addresses: {
         Row: {
           address: string
@@ -451,10 +669,32 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      log_admin_activity: {
+        Args: {
+          p_admin_username: string
+          p_action: string
+          p_target_type?: string
+          p_target_id?: string
+          p_details?: Json
+          p_ip_address?: unknown
+        }
+        Returns: string
+      }
+      send_user_notification: {
+        Args: {
+          p_user_id: string
+          p_title: string
+          p_message: string
+          p_type?: string
+        }
+        Returns: string
+      }
     }
     Enums: {
+      admin_message_type: "registration" | "withdrawal" | "deposit" | "general"
       crypto_type: "BTC" | "ETH" | "USDT"
       deposit_status: "pending" | "confirmed" | "failed"
+      message_status: "unread" | "read"
       message_type: "system" | "admin" | "support"
       plan_status: "active" | "inactive"
       ticket_status: "open" | "replied" | "closed"
@@ -574,8 +814,10 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      admin_message_type: ["registration", "withdrawal", "deposit", "general"],
       crypto_type: ["BTC", "ETH", "USDT"],
       deposit_status: ["pending", "confirmed", "failed"],
+      message_status: ["unread", "read"],
       message_type: ["system", "admin", "support"],
       plan_status: ["active", "inactive"],
       ticket_status: ["open", "replied", "closed"],

@@ -1,12 +1,12 @@
 
 import React from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { WithdrawPage } from '@/components/withdraw/WithdrawPage';
+import { EnhancedWithdrawPage } from '@/components/withdraw/EnhancedWithdrawPage';
 
 const Withdraw = () => {
   return (
     <DashboardLayout>
-      <WithdrawPage />
+      <EnhancedWithdrawPage />
     </DashboardLayout>
   );
 };

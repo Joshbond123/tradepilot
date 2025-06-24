@@ -1,76 +1,78 @@
 
-import React, { useState, useEffect } from 'react';
-import { Card } from '@/components/ui/card';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import { Card } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
+import { Loader2, Shield } from 'lucide-react';
+import { RecaptchaWrapper } from './RecaptchaWrapper';
 
 export const AuthPage = () => {
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  
-  // Login states
-  const [loginEmail, setLoginEmail] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
-  
-  // Registration states
-  const [fullName, setFullName] = useState('');
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  
   const [isLoading, setIsLoading] = useState(false);
+  const [isLogin, setIsLogin] = useState(true);
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    username: '',
+    fullName: ''
+  });
+  const { toast } = useToast();
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        navigate('/dashboard');
-      }
-    };
-    checkAuth();
-  }, [navigate]);
-
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!loginEmail || !loginPassword) {
-      toast({
-        title: "Error",
-        description: "Please fill in all fields",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsLoading(true);
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: loginEmail,
-        password: loginPassword,
-      });
 
-      if (error) {
-        toast({
-          title: "Login Failed",
-          description: error.message,
-          variant: "destructive",
+    try {
+      if (isLogin) {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: formData.email,
+          password: formData.password,
         });
-      } else {
+
+        if (error) throw error;
+
         toast({
-          title: "Success",
-          description: "Logged in successfully!",
+          title: "Login successful",
+          description: "Welcome back to TradePilot AI!",
         });
         navigate('/dashboard');
+      } else {
+        const { data, error } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+          options: {
+            data: {
+              username: formData.username,
+              full_name: formData.fullName,
+            }
+          }
+        });
+
+        if (error) throw error;
+
+        toast({
+          title: "Registration successful",
+          description: "Welcome to TradePilot AI! Please check your email to verify your account.",
+        });
+        
+        if (data.user && !data.user.email_confirmed_at) {
+          toast({
+            title: "Please verify your email",
+            description: "Check your inbox and click the verification link to complete registration.",
+          });
+        } else {
+          navigate('/dashboard');
+        }
       }
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: "An unexpected error occurred",
+        title: "Authentication failed",
+        description: error.message,
         variant: "destructive",
       });
     } finally {
@@ -78,206 +80,112 @@ export const AuthPage = () => {
     }
   };
 
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!fullName || !username || !email || !password || !confirmPassword) {
-      toast({
-        title: "Error",
-        description: "Please fill in all fields",
-        variant: "destructive",
-      });
-      return;
-    }
+  const handleRecaptchaVerify = (token: string) => {
+    setRecaptchaToken(token);
+  };
 
-    if (password !== confirmPassword) {
-      toast({
-        title: "Error",
-        description: "Passwords do not match",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (password.length < 6) {
-      toast({
-        title: "Error",
-        description: "Password must be at least 6 characters",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/dashboard`,
-          data: {
-            full_name: fullName,
-            username: username,
-          }
-        }
-      });
-
-      if (error) {
-        toast({
-          title: "Registration Failed",
-          description: error.message,
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Success",
-          description: "Account created successfully! You can now log in.",
-        });
-        // Clear the form
-        setFullName('');
-        setUsername('');
-        setEmail('');
-        setPassword('');
-        setConfirmPassword('');
-      }
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+  const handleRecaptchaExpire = () => {
+    setRecaptchaToken(null);
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md bg-gray-800/50 border-gray-700">
-        <Tabs defaultValue="login" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 bg-gray-700">
-            <TabsTrigger value="login" className="data-[state=active]:bg-blue-600">Login</TabsTrigger>
-            <TabsTrigger value="register" className="data-[state=active]:bg-blue-600">Register</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="login" className="p-6">
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="text-center mb-6">
-                <h2 className="text-2xl font-bold text-white">Welcome Back</h2>
-                <p className="text-gray-400">Sign in to your account</p>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="loginEmail" className="text-gray-300">Email</Label>
-                <Input
-                  id="loginEmail"
-                  type="email"
-                  value={loginEmail}
-                  onChange={(e) => setLoginEmail(e.target.value)}
-                  className="bg-gray-700/50 border-gray-600 text-white"
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="loginPassword" className="text-gray-300">Password</Label>
-                <Input
-                  id="loginPassword"
-                  type="password"
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  className="bg-gray-700/50 border-gray-600 text-white"
-                  required
-                />
-              </div>
-              
-              <Button 
-                type="submit" 
-                className="w-full bg-blue-600 hover:bg-blue-700"
-                disabled={isLoading}
-              >
-                {isLoading ? 'Signing In...' : 'Sign In'}
-              </Button>
-            </form>
-          </TabsContent>
-          
-          <TabsContent value="register" className="p-6">
-            <form onSubmit={handleRegister} className="space-y-4">
-              <div className="text-center mb-6">
-                <h2 className="text-2xl font-bold text-white">Create Account</h2>
-                <p className="text-gray-400">Join TradePilot AI today</p>
-              </div>
-              
-              <div className="space-y-2">
+      <Card className="w-full max-w-md p-8 bg-gray-800/50 backdrop-blur-sm border-gray-700">
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center space-x-2 mb-4">
+            <Shield className="h-8 w-8 text-red-400" />
+            <span className="text-2xl font-bold text-white">TradePilot AI</span>
+          </div>
+          <h1 className="text-2xl font-bold text-white mb-2">
+            {isLogin ? 'Welcome Back' : 'Create Account'}
+          </h1>
+          <p className="text-gray-400">
+            {isLogin ? 'Sign in to your account' : 'Join the AI trading revolution'}
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {!isLogin && (
+            <>
+              <div>
                 <Label htmlFor="fullName" className="text-gray-300">Full Name</Label>
                 <Input
                   id="fullName"
                   type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
+                  value={formData.fullName}
+                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                   className="bg-gray-700/50 border-gray-600 text-white"
-                  required
+                  required={!isLogin}
                 />
               </div>
-              
-              <div className="space-y-2">
+              <div>
                 <Label htmlFor="username" className="text-gray-300">Username</Label>
                 <Input
                   id="username"
                   type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  value={formData.username}
+                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                   className="bg-gray-700/50 border-gray-600 text-white"
-                  required
+                  required={!isLogin}
                 />
               </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-gray-300">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="bg-gray-700/50 border-gray-600 text-white"
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-gray-300">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="bg-gray-700/50 border-gray-600 text-white"
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword" className="text-gray-300">Confirm Password</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="bg-gray-700/50 border-gray-600 text-white"
-                  required
-                />
-              </div>
-              
-              <Button 
-                type="submit" 
-                className="w-full bg-green-600 hover:bg-green-700"
-                disabled={isLoading}
-              >
-                {isLoading ? 'Creating Account...' : 'Create Account'}
-              </Button>
-            </form>
-          </TabsContent>
-        </Tabs>
+            </>
+          )}
+          
+          <div>
+            <Label htmlFor="email" className="text-gray-300">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              className="bg-gray-700/50 border-gray-600 text-white"
+              required
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="password" className="text-gray-300">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              className="bg-gray-700/50 border-gray-600 text-white"
+              required
+            />
+          </div>
+
+          <RecaptchaWrapper 
+            onVerify={handleRecaptchaVerify}
+            onExpire={handleRecaptchaExpire}
+          />
+
+          <Button
+            type="submit"
+            className="w-full bg-blue-600 hover:bg-blue-700"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {isLogin ? 'Signing in...' : 'Creating account...'}
+              </>
+            ) : (
+              isLogin ? 'Sign In' : 'Create Account'
+            )}
+          </Button>
+        </form>
+
+        <div className="mt-6 text-center">
+          <button
+            type="button"
+            onClick={() => setIsLogin(!isLogin)}
+            className="text-blue-400 hover:text-blue-300 text-sm"
+          >
+            {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
+          </button>
+        </div>
       </Card>
     </div>
   );
