@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -65,18 +64,24 @@ export const AdminEnhancedSystemSettings = () => {
   const { data: walletData } = useQuery({
     queryKey: ['admin-wallet-addresses'],
     queryFn: async () => {
+      console.log('Fetching wallet addresses...');
       const { data, error } = await supabase
         .from('wallet_addresses')
         .select('*')
         .eq('is_active', true);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching wallets:', error);
+        throw error;
+      }
       
+      console.log('Fetched wallet data:', data);
       const walletsObj: any = {};
       data.forEach((wallet: any) => {
         walletsObj[wallet.crypto_type] = wallet.address;
       });
       
+      console.log('Processed wallet addresses:', walletsObj);
       setWalletAddresses(walletsObj);
       return data;
     },
@@ -134,25 +139,60 @@ export const AdminEnhancedSystemSettings = () => {
 
   const updateWalletsMutation = useMutation({
     mutationFn: async (newWallets: any) => {
+      console.log('Updating wallets with:', newWallets);
+      
       for (const [cryptoType, address] of Object.entries(newWallets)) {
-        const { error } = await supabase
+        if (!address || address === '') {
+          console.log(`Skipping empty address for ${cryptoType}`);
+          continue;
+        }
+        
+        console.log(`Updating ${cryptoType} with address: ${address}`);
+        
+        // First, deactivate existing addresses for this crypto type
+        const { error: deactivateError } = await supabase
+          .from('wallet_addresses')
+          .update({ is_active: false })
+          .eq('crypto_type', cryptoType);
+        
+        if (deactivateError) {
+          console.error(`Error deactivating ${cryptoType}:`, deactivateError);
+          throw deactivateError;
+        }
+        
+        // Then insert/update the new address
+        const { error: upsertError } = await supabase
           .from('wallet_addresses')
           .upsert({
             crypto_type: cryptoType as 'BTC' | 'ETH' | 'USDT',
             address: address as string,
             is_active: true,
             updated_at: new Date().toISOString()
-          }, { onConflict: 'crypto_type' });
+          });
         
-        if (error) throw error;
+        if (upsertError) {
+          console.error(`Error upserting ${cryptoType}:`, upsertError);
+          throw upsertError;
+        }
+        
+        console.log(`Successfully updated ${cryptoType}`);
       }
     },
     onSuccess: () => {
+      console.log('Wallet update successful');
       queryClient.invalidateQueries({ queryKey: ['admin-wallet-addresses'] });
-      toast({ title: "Wallets Updated", description: "Wallet addresses have been updated successfully." });
+      toast({
+        title: "Wallets Updated",
+        description: "Wallet addresses have been updated successfully.",
+      });
     },
     onError: (error: any) => {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      console.error('Wallet update failed:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update wallet addresses",
+        variant: "destructive",
+      });
     },
   });
 
@@ -172,7 +212,16 @@ export const AdminEnhancedSystemSettings = () => {
   };
 
   const handleSaveWallets = () => {
+    console.log('Saving wallets:', walletAddresses);
     updateWalletsMutation.mutate(walletAddresses);
+  };
+
+  const handleWalletChange = (cryptoType: string, value: string) => {
+    console.log(`Wallet change: ${cryptoType} = ${value}`);
+    setWalletAddresses(prev => ({
+      ...prev,
+      [cryptoType]: value
+    }));
   };
 
   return (
@@ -339,7 +388,7 @@ export const AdminEnhancedSystemSettings = () => {
                 <Label className="text-gray-300">Bitcoin (BTC) Address</Label>
                 <Input
                   value={walletAddresses.BTC || ''}
-                  onChange={(e) => setWalletAddresses({...walletAddresses, BTC: e.target.value})}
+                  onChange={(e) => handleWalletChange('BTC', e.target.value)}
                   placeholder="bc1..."
                   className="bg-gray-700/50 border-gray-600 text-white font-mono mt-2"
                 />
@@ -348,7 +397,7 @@ export const AdminEnhancedSystemSettings = () => {
                 <Label className="text-gray-300">Ethereum (ETH) Address</Label>
                 <Input
                   value={walletAddresses.ETH || ''}
-                  onChange={(e) => setWalletAddresses({...walletAddresses, ETH: e.target.value})}
+                  onChange={(e) => handleWalletChange('ETH', e.target.value)}
                   placeholder="0x..."
                   className="bg-gray-700/50 border-gray-600 text-white font-mono mt-2"
                 />
@@ -357,17 +406,18 @@ export const AdminEnhancedSystemSettings = () => {
                 <Label className="text-gray-300">USDT (TRC20) Address</Label>
                 <Input
                   value={walletAddresses.USDT || ''}
-                  onChange={(e) => setWalletAddresses({...walletAddresses, USDT: e.target.value})}
+                  onChange={(e) => handleWalletChange('USDT', e.target.value)}
                   placeholder="TR..."
                   className="bg-gray-700/50 border-gray-600 text-white font-mono mt-2"
                 />
               </div>
               <Button
                 onClick={handleSaveWallets}
+                disabled={updateWalletsMutation.isPending}
                 className="w-full bg-green-600 hover:bg-green-700"
               >
                 <Save className="h-4 w-4 mr-2" />
-                Save Wallet Addresses
+                {updateWalletsMutation.isPending ? 'Saving...' : 'Save Wallet Addresses'}
               </Button>
             </div>
           </Card>
