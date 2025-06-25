@@ -63,7 +63,14 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { name: 'Settings', href: '/settings', icon: Settings },
   ];
 
-  const mobileNavItems = navItems;
+  // Only show these 5 buttons in mobile bottom navigation
+  const mobileNavItems = [
+    { name: 'Dashboard', href: '/dashboard', icon: Home },
+    { name: 'AI Plans', href: '/plans', icon: TrendingUp },
+    { name: 'Deposit', href: '/deposit', icon: CreditCard },
+    { name: 'Withdraw', href: '/withdraw', icon: Banknote },
+    { name: 'Inbox', href: '/inbox', icon: Mail },
+  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
@@ -189,7 +196,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         </main>
       </div>
 
-      {/* Fixed Mobile Bottom Navigation */}
+      {/* Fixed Mobile Bottom Navigation - Only 5 buttons */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-gray-900/95 backdrop-blur-sm border-t border-gray-700">
         <div className="flex items-center justify-around py-2">
           {mobileNavItems.map((item) => {

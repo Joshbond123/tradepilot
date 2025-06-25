@@ -205,23 +205,27 @@ export const EnhancedWithdrawPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-4 sm:p-6">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div className="text-center">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-4">
+      <div className="max-w-6xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="text-center mb-6">
           <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Withdraw Funds</h1>
           <p className="text-gray-400 text-sm sm:text-base">
             Withdraw your funds to your crypto wallet. All amounts are in USD.
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-6">
-          <Card className="bg-gray-800/50 border-gray-700 p-4 sm:p-6">
+        {/* Main Content - Fixed spacing and structure */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Withdrawal Form */}
+          <Card className="bg-gray-800/50 border-gray-700 p-4 sm:p-6 h-fit">
             <div className="flex items-center space-x-2 mb-6">
               <Download className="h-5 w-5 text-red-400" />
               <h3 className="text-lg font-bold text-white">Withdrawal Request</h3>
             </div>
 
-            <div className="mb-6">
+            {/* Available Balance */}
+            <div className="mb-6 p-4 bg-gray-700/30 rounded-lg">
               <div className="flex items-center space-x-2 mb-2">
                 <DollarSign className="h-5 w-5 text-green-400" />
                 <span className="text-gray-300">Available Balance:</span>
@@ -231,8 +235,9 @@ export const EnhancedWithdrawPage = () => {
               </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2">
                 <Label className="text-gray-300">Enter Amount in $ USD</Label>
                 <Input
                   type="number"
@@ -240,17 +245,17 @@ export const EnhancedWithdrawPage = () => {
                   value={withdrawForm.amount}
                   onChange={(e) => setWithdrawForm({ ...withdrawForm, amount: e.target.value })}
                   placeholder="0.00"
-                  className="bg-gray-700/50 border-gray-600 text-white mt-2"
+                  className="bg-gray-700/50 border-gray-600 text-white"
                   required
                 />
-                <p className="text-gray-500 text-sm mt-1">
+                <p className="text-gray-500 text-sm">
                   Minimum: ${systemSettings?.min_withdrawal_amount || '10.00'}
                 </p>
               </div>
 
-              <div>
+              <div className="space-y-3">
                 <Label className="text-gray-300">Cryptocurrency</Label>
-                <div className="grid grid-cols-1 gap-2 mt-2">
+                <div className="grid grid-cols-1 gap-2">
                   {cryptoOptions.map((crypto) => (
                     <button
                       key={crypto.value}
@@ -269,13 +274,13 @@ export const EnhancedWithdrawPage = () => {
                 </div>
               </div>
 
-              <div>
+              <div className="space-y-2">
                 <Label className="text-gray-300">Destination Wallet Address</Label>
                 <Input
                   value={withdrawForm.destination_address}
                   onChange={(e) => setWithdrawForm({ ...withdrawForm, destination_address: e.target.value })}
                   placeholder="Enter wallet address"
-                  className="bg-gray-700/50 border-gray-600 text-white mt-2 font-mono"
+                  className="bg-gray-700/50 border-gray-600 text-white font-mono text-sm"
                   required
                 />
               </div>
@@ -290,6 +295,7 @@ export const EnhancedWithdrawPage = () => {
               </Button>
             </form>
 
+            {/* Instructions */}
             <div className="mt-6 p-4 bg-blue-600/10 rounded-lg border border-blue-600/30">
               <p className="text-blue-400 text-sm">
                 Withdrawals are processed within 0–3 minutes. If you don't receive your funds within a few hours, please contact support. Ensure the wallet address you provide is correct — funds sent to a wrong address are unrecoverable.
@@ -297,7 +303,8 @@ export const EnhancedWithdrawPage = () => {
             </div>
           </Card>
 
-          <Card className="bg-gray-800/50 border-gray-700 p-4 sm:p-6">
+          {/* Withdrawal History */}
+          <Card className="bg-gray-800/50 border-gray-700 p-4 sm:p-6 h-fit">
             <h3 className="text-lg font-bold text-white mb-4">Withdrawal History</h3>
             
             {withdrawals && withdrawals.length > 0 ? (
