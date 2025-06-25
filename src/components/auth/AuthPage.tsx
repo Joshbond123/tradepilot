@@ -57,7 +57,7 @@ export const AuthPage = () => {
 
         toast({
           title: "Registration successful",
-          description: "Welcome to TradePilot AI! Please check your email to verify your account.",
+          description: "Welcome to TradePilot AI! You're all set—start exploring your dashboard.",
         });
         
         if (data.user && !data.user.email_confirmed_at) {
