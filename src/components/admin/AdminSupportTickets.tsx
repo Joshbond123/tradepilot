@@ -12,6 +12,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 
+type TicketStatus = 'open' | 'replied' | 'closed';
+
 export const AdminSupportTickets = () => {
   const [selectedTicket, setSelectedTicket] = useState<any>(null);
   const [replyMessage, setReplyMessage] = useState('');
@@ -40,7 +42,7 @@ export const AdminSupportTickets = () => {
         .from('support_tickets')
         .update({
           admin_reply: reply,
-          status: 'replied',
+          status: 'replied' as TicketStatus,
           updated_at: new Date().toISOString()
         })
         .eq('id', ticketId);
@@ -59,7 +61,7 @@ export const AdminSupportTickets = () => {
   });
 
   const updateTicketStatusMutation = useMutation({
-    mutationFn: async ({ ticketId, status }: { ticketId: string; status: string }) => {
+    mutationFn: async ({ ticketId, status }: { ticketId: string; status: TicketStatus }) => {
       const { error } = await supabase
         .from('support_tickets')
         .update({
@@ -237,7 +239,7 @@ export const AdminSupportTickets = () => {
                 <Button
                   onClick={() => updateTicketStatusMutation.mutate({ 
                     ticketId: selectedTicket.id, 
-                    status: 'closed' 
+                    status: 'closed' as TicketStatus
                   })}
                   variant="outline"
                   className="border-green-600 text-green-400 hover:bg-green-600/10"
@@ -334,7 +336,7 @@ const TicketTable = ({ tickets, onSelectTicket, onUpdateStatus, isLoading }: any
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => onUpdateStatus({ ticketId: ticket.id, status: 'closed' })}
+                      onClick={() => onUpdateStatus({ ticketId: ticket.id, status: 'closed' as TicketStatus })}
                       className="border-green-600 text-green-400 hover:bg-green-600/10"
                     >
                       Close

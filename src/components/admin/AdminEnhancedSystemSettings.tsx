@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { AdminMessageTemplates } from './AdminMessageTemplates';
 import { AdminRecaptchaSettings } from './AdminRecaptchaSettings';
+import type { Json } from '@/integrations/supabase/types';
 
 export const AdminEnhancedSystemSettings = () => {
   const [settings, setSettings] = useState<any>({});
@@ -85,7 +86,7 @@ export const AdminEnhancedSystemSettings = () => {
     mutationFn: async (newSettings: any) => {
       const updates = Object.entries(newSettings).map(([key, value]) => ({
         setting_key: key,
-        setting_value: value,
+        setting_value: value as Json,
         updated_at: new Date().toISOString()
       }));
 
@@ -110,7 +111,7 @@ export const AdminEnhancedSystemSettings = () => {
     mutationFn: async (newSettings: any) => {
       const updates = Object.entries(newSettings).map(([key, value]) => ({
         setting_key: key,
-        setting_value: value,
+        setting_value: value as Json,
         updated_at: new Date().toISOString()
       }));
 

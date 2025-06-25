@@ -136,8 +136,8 @@ export const EnhancedWithdrawPage = () => {
     e.preventDefault();
     
     const amount = parseFloat(withdrawForm.amount);
-    const minWithdrawal = parseFloat(systemSettings?.min_withdrawal_amount || '10');
-    const userBalance = parseFloat(profile?.balance || '0');
+    const minWithdrawal = parseFloat(String(systemSettings?.min_withdrawal_amount || '10'));
+    const userBalance = parseFloat(String(profile?.balance || '0'));
 
     if (amount < minWithdrawal) {
       toast({
