@@ -2,6 +2,12 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
+  Home,
+  TrendingUp,
+  ArrowUpDown,
+  CreditCard,
+  Banknote,
+  Mail,
   Users, 
   Settings,
   Menu,
@@ -46,6 +52,12 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   };
 
   const navItems = [
+    { name: 'Dashboard', href: '/dashboard', icon: Home },
+    { name: 'AI Plans', href: '/plans', icon: TrendingUp },
+    { name: 'Arbitrage', href: '/arbitrage', icon: ArrowUpDown },
+    { name: 'Deposit', href: '/deposit', icon: CreditCard },
+    { name: 'Withdraw', href: '/withdraw', icon: Banknote },
+    { name: 'Inbox', href: '/inbox', icon: Mail },
     { name: 'Referrals', href: '/referrals', icon: Users },
     { name: 'Support', href: '/support', icon: MessageSquare },
     { name: 'Settings', href: '/settings', icon: Settings },
