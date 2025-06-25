@@ -14,7 +14,6 @@ import { useToast } from '@/components/ui/use-toast';
 export const EnhancedDepositPage = () => {
   const [selectedCrypto, setSelectedCrypto] = useState('USDT');
   const [depositAmount, setDepositAmount] = useState('');
-  const [txHash, setTxHash] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -85,7 +84,6 @@ export const EnhancedDepositPage = () => {
           amount: depositData.amount,
           crypto_type: depositData.crypto_type,
           wallet_address: depositData.wallet_address,
-          transaction_hash: depositData.transaction_hash || null,
           status: 'pending'
         });
       
@@ -98,7 +96,6 @@ export const EnhancedDepositPage = () => {
         description: "Your deposit has been submitted and is being processed.",
       });
       setDepositAmount('');
-      setTxHash('');
     },
     onError: (error: any) => {
       toast({
@@ -121,7 +118,7 @@ export const EnhancedDepositPage = () => {
       return;
     }
 
-    if (systemSettings?.deposit_confirmation_required === 'true' && !depositAmount) {
+    if (!depositAmount) {
       toast({
         title: "Amount Required",
         description: "Please enter the amount you sent.",
@@ -131,10 +128,9 @@ export const EnhancedDepositPage = () => {
     }
 
     submitDepositMutation.mutate({
-      amount: depositAmount || '0',
+      amount: depositAmount,
       crypto_type: selectedCrypto,
-      wallet_address: walletAddress,
-      transaction_hash: txHash
+      wallet_address: walletAddress
     });
   };
 
@@ -164,22 +160,39 @@ export const EnhancedDepositPage = () => {
     }
   };
 
-  const currentWalletAddress = walletAddresses?.[selectedCrypto];
   const confirmationRequired = systemSettings?.deposit_confirmation_required === 'true';
 
+  const cryptoOptions = [
+    { 
+      value: 'BTC', 
+      label: 'Bitcoin (BTC)', 
+      icon: 'https://assets.coingecko.com/coins/images/1/large/bitcoin.png'
+    },
+    { 
+      value: 'ETH', 
+      label: 'Ethereum (ETH)', 
+      icon: 'https://assets.coingecko.com/coins/images/279/large/ethereum.png'
+    },
+    { 
+      value: 'USDT', 
+      label: 'USDT (TRC20)', 
+      icon: 'https://assets.coingecko.com/coins/images/325/large/Tether.png'
+    }
+  ];
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-6">
-      <div className="max-w-6xl mx-auto space-y-8">
-        <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Deposit Funds</h1>
-          <p className="text-gray-400">
-            Send cryptocurrency to the address below to fund your account.
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-4 sm:p-6">
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="text-center">
+          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Deposit Funds</h1>
+          <p className="text-gray-400 text-sm sm:text-base">
+            Fund your account with cryptocurrency
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-1">
-            <Card className="bg-gray-800/50 border-gray-700 p-6">
+        {confirmationRequired ? (
+          <div className="space-y-6">
+            <Card className="bg-gray-800/50 border-gray-700 p-4 sm:p-6">
               <div className="flex items-center space-x-2 mb-6">
                 <Upload className="h-5 w-5 text-green-400" />
                 <h3 className="text-lg font-bold text-white">Deposit Instructions</h3>
@@ -188,31 +201,38 @@ export const EnhancedDepositPage = () => {
               <div className="space-y-4">
                 <div>
                   <Label className="text-gray-300">Select Cryptocurrency</Label>
-                  <select
-                    value={selectedCrypto}
-                    onChange={(e) => setSelectedCrypto(e.target.value)}
-                    className="w-full bg-gray-700/50 border border-gray-600 text-white rounded-md px-3 py-2 mt-2"
-                  >
-                    <option value="USDT">USDT (TRC20)</option>
-                    <option value="BTC">Bitcoin (BTC)</option>
-                    <option value="ETH">Ethereum (ETH)</option>
-                  </select>
+                  <div className="grid grid-cols-1 gap-2 mt-2">
+                    {cryptoOptions.map((crypto) => (
+                      <button
+                        key={crypto.value}
+                        onClick={() => setSelectedCrypto(crypto.value)}
+                        className={`flex items-center space-x-3 p-3 rounded-lg border transition-colors ${
+                          selectedCrypto === crypto.value
+                            ? 'border-green-500 bg-green-600/10'
+                            : 'border-gray-600 bg-gray-700/50 hover:bg-gray-600/50'
+                        }`}
+                      >
+                        <img src={crypto.icon} alt={crypto.label} className="w-6 h-6" />
+                        <span className="text-white font-medium">{crypto.label}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
-                {currentWalletAddress && (
+                {walletAddresses?.[selectedCrypto] && (
                   <div>
                     <Label className="text-gray-300">Deposit Address</Label>
                     <div className="flex items-center space-x-2 mt-2">
                       <Input
-                        value={currentWalletAddress}
+                        value={walletAddresses[selectedCrypto]}
                         readOnly
-                        className="bg-gray-700/50 border-gray-600 text-white font-mono text-sm"
+                        className="bg-gray-700/50 border-gray-600 text-white font-mono text-xs sm:text-sm"
                       />
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => copyToClipboard(currentWalletAddress)}
-                        className="border-gray-600 text-gray-400 hover:text-white"
+                        onClick={() => copyToClipboard(walletAddresses[selectedCrypto])}
+                        className="border-gray-600 text-gray-400 hover:text-white shrink-0"
                       >
                         <Copy className="h-4 w-4" />
                       </Button>
@@ -220,39 +240,21 @@ export const EnhancedDepositPage = () => {
                   </div>
                 )}
 
-                {confirmationRequired && (
-                  <div>
-                    <Label className="text-gray-300">Amount Sent (USD)</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={depositAmount}
-                      onChange={(e) => setDepositAmount(e.target.value)}
-                      placeholder="Enter amount you sent"
-                      className="bg-gray-700/50 border-gray-600 text-white mt-2"
-                    />
-                    <p className="text-gray-500 text-sm mt-1">
-                      Please enter the USD value of the amount you sent
-                    </p>
-                  </div>
-                )}
-
                 <div>
-                  <Label className="text-gray-300">Transaction Hash (Optional)</Label>
+                  <Label className="text-gray-300">Amount Sent (USD)</Label>
                   <Input
-                    value={txHash}
-                    onChange={(e) => setTxHash(e.target.value)}
-                    placeholder="Enter transaction hash"
-                    className="bg-gray-700/50 border-gray-600 text-white font-mono mt-2"
+                    type="number"
+                    step="0.01"
+                    value={depositAmount}
+                    onChange={(e) => setDepositAmount(e.target.value)}
+                    placeholder="Enter amount you sent"
+                    className="bg-gray-700/50 border-gray-600 text-white mt-2"
                   />
-                  <p className="text-gray-500 text-sm mt-1">
-                    Providing the transaction hash helps speed up confirmation
-                  </p>
                 </div>
 
                 <Button
                   onClick={handleSubmitDeposit}
-                  disabled={submitDepositMutation.isPending || !currentWalletAddress}
+                  disabled={submitDepositMutation.isPending}
                   className="w-full bg-green-600 hover:bg-green-700"
                 >
                   <Upload className="h-4 w-4 mr-2" />
@@ -261,29 +263,22 @@ export const EnhancedDepositPage = () => {
               </div>
 
               <div className="mt-6 p-4 bg-blue-600/10 rounded-lg border border-blue-600/30">
-                <h4 className="text-blue-400 font-semibold mb-2">Important Notes:</h4>
-                <ul className="text-gray-300 text-sm space-y-1">
-                  <li>• Only send {selectedCrypto} to this address</li>
-                  <li>• Minimum deposit may apply</li>
-                  <li>• Deposits are usually confirmed within 30 minutes</li>
-                  <li>• Do not send from exchanges directly</li>
-                </ul>
+                <p className="text-blue-400 text-sm">
+                  Copy the wallet address, send your deposit, and enter the amount you sent. The AI will automatically detect and confirm the deposit via blockchain. Deposits are credited instantly after blockchain confirmation.
+                </p>
               </div>
             </Card>
-          </div>
 
-          <div className="lg:col-span-2">
-            <Card className="bg-gray-800/50 border-gray-700 p-6">
-              <h3 className="text-lg font-bold text-white mb-4">Deposit History</h3>
-              
-              {deposits && deposits.length > 0 ? (
+            {deposits && deposits.length > 0 && (
+              <Card className="bg-gray-800/50 border-gray-700 p-4 sm:p-6">
+                <h3 className="text-lg font-bold text-white mb-4">Deposit History</h3>
+                
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow className="border-gray-700">
                         <TableHead className="text-gray-300">Amount</TableHead>
                         <TableHead className="text-gray-300">Crypto</TableHead>
-                        <TableHead className="text-gray-300">Transaction</TableHead>
                         <TableHead className="text-gray-300">Status</TableHead>
                         <TableHead className="text-gray-300">Date</TableHead>
                       </TableRow>
@@ -300,15 +295,6 @@ export const EnhancedDepositPage = () => {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            {deposit.transaction_hash ? (
-                              <p className="text-gray-400 font-mono text-sm">
-                                {deposit.transaction_hash.slice(0, 10)}...
-                              </p>
-                            ) : (
-                              <p className="text-gray-500 text-sm">Not provided</p>
-                            )}
-                          </TableCell>
-                          <TableCell>
                             <Badge className={getStatusColor(deposit.status)}>
                               {getStatusIcon(deposit.status)}
                               <span className="ml-1 capitalize">{deposit.status}</span>
@@ -322,16 +308,56 @@ export const EnhancedDepositPage = () => {
                     </TableBody>
                   </Table>
                 </div>
-              ) : (
-                <div className="text-center py-8 text-gray-400">
-                  <Upload className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No deposits yet</p>
-                  <p className="text-sm">Your deposit history will appear here</p>
-                </div>
-              )}
-            </Card>
+              </Card>
+            )}
           </div>
-        </div>
+        ) : (
+          <Card className="bg-gray-800/50 border-gray-700 p-4 sm:p-6">
+            <div className="flex items-center space-x-2 mb-6">
+              <Upload className="h-5 w-5 text-green-400" />
+              <h3 className="text-lg font-bold text-white">Available Cryptocurrencies</h3>
+            </div>
+
+            <div className="space-y-4">
+              {cryptoOptions.map((crypto) => {
+                const address = walletAddresses?.[crypto.value];
+                return address ? (
+                  <div key={crypto.value} className="p-4 bg-gray-700/30 rounded-lg border border-gray-600">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center space-x-3">
+                        <img src={crypto.icon} alt={crypto.label} className="w-8 h-8" />
+                        <div>
+                          <h4 className="text-white font-semibold">{crypto.label}</h4>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Input
+                        value={address}
+                        readOnly
+                        className="bg-gray-800/50 border-gray-600 text-white font-mono text-xs sm:text-sm"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => copyToClipboard(address)}
+                        className="border-gray-600 text-gray-400 hover:text-white shrink-0"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ) : null;
+              })}
+            </div>
+
+            <div className="mt-6 p-4 bg-blue-600/10 rounded-lg border border-blue-600/30">
+              <p className="text-blue-400 text-sm">
+                Copy the wallet address and send the correct cryptocurrency. Deposits will be automatically credited to your dashboard once the transaction is confirmed on the blockchain. If you don't receive your deposit within a few hours, please contact support. Deposits are processed instantly once confirmed.
+              </p>
+            </div>
+          </Card>
+        )}
       </div>
     </div>
   );

@@ -90,7 +90,6 @@ export const EnhancedWithdrawPage = () => {
       
       if (error) throw error;
 
-      // Send withdrawal notification using admin template
       const { data: template } = await supabase
         .from('admin_message_templates')
         .select('subject, content')
@@ -187,142 +186,164 @@ export const EnhancedWithdrawPage = () => {
     }
   };
 
+  const cryptoOptions = [
+    { 
+      value: 'BTC', 
+      label: 'Bitcoin (BTC)', 
+      icon: 'https://assets.coingecko.com/coins/images/1/large/bitcoin.png'
+    },
+    { 
+      value: 'ETH', 
+      label: 'Ethereum (ETH)', 
+      icon: 'https://assets.coingecko.com/coins/images/279/large/ethereum.png'
+    },
+    { 
+      value: 'USDT', 
+      label: 'USDT (TRC20)', 
+      icon: 'https://assets.coingecko.com/coins/images/325/large/Tether.png'
+    }
+  ];
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-6">
-      <div className="max-w-6xl mx-auto space-y-8">
-        <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Withdraw Funds</h1>
-          <p className="text-gray-400">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-4 sm:p-6">
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="text-center">
+          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Withdraw Funds</h1>
+          <p className="text-gray-400 text-sm sm:text-base">
             Withdraw your funds to your crypto wallet. All amounts are in USD.
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-1">
-            <Card className="bg-gray-800/50 border-gray-700 p-6">
-              <div className="flex items-center space-x-2 mb-6">
-                <Download className="h-5 w-5 text-red-400" />
-                <h3 className="text-lg font-bold text-white">Withdrawal Request</h3>
-              </div>
+        <div className="grid lg:grid-cols-2 gap-6">
+          <Card className="bg-gray-800/50 border-gray-700 p-4 sm:p-6">
+            <div className="flex items-center space-x-2 mb-6">
+              <Download className="h-5 w-5 text-red-400" />
+              <h3 className="text-lg font-bold text-white">Withdrawal Request</h3>
+            </div>
 
-              <div className="mb-6">
-                <div className="flex items-center space-x-2 mb-2">
-                  <DollarSign className="h-5 w-5 text-green-400" />
-                  <span className="text-gray-300">Available Balance:</span>
-                </div>
-                <p className="text-2xl font-bold text-green-400">
-                  ${Number(profile?.balance || 0).toLocaleString()}
+            <div className="mb-6">
+              <div className="flex items-center space-x-2 mb-2">
+                <DollarSign className="h-5 w-5 text-green-400" />
+                <span className="text-gray-300">Available Balance:</span>
+              </div>
+              <p className="text-2xl font-bold text-green-400">
+                ${Number(profile?.balance || 0).toLocaleString()}
+              </p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <Label className="text-gray-300">Enter Amount in $ USD</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={withdrawForm.amount}
+                  onChange={(e) => setWithdrawForm({ ...withdrawForm, amount: e.target.value })}
+                  placeholder="0.00"
+                  className="bg-gray-700/50 border-gray-600 text-white mt-2"
+                  required
+                />
+                <p className="text-gray-500 text-sm mt-1">
+                  Minimum: ${systemSettings?.min_withdrawal_amount || '10.00'}
                 </p>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <Label className="text-gray-300">Enter Amount in $ USD</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={withdrawForm.amount}
-                    onChange={(e) => setWithdrawForm({ ...withdrawForm, amount: e.target.value })}
-                    placeholder="0.00"
-                    className="bg-gray-700/50 border-gray-600 text-white mt-2"
-                    required
-                  />
-                  <p className="text-gray-500 text-sm mt-1">
-                    Minimum: ${systemSettings?.min_withdrawal_amount || '10.00'}
-                  </p>
+              <div>
+                <Label className="text-gray-300">Cryptocurrency</Label>
+                <div className="grid grid-cols-1 gap-2 mt-2">
+                  {cryptoOptions.map((crypto) => (
+                    <button
+                      key={crypto.value}
+                      type="button"
+                      onClick={() => setWithdrawForm({ ...withdrawForm, crypto_type: crypto.value })}
+                      className={`flex items-center space-x-3 p-3 rounded-lg border transition-colors ${
+                        withdrawForm.crypto_type === crypto.value
+                          ? 'border-red-500 bg-red-600/10'
+                          : 'border-gray-600 bg-gray-700/50 hover:bg-gray-600/50'
+                      }`}
+                    >
+                      <img src={crypto.icon} alt={crypto.label} className="w-6 h-6" />
+                      <span className="text-white font-medium">{crypto.label}</span>
+                    </button>
+                  ))}
                 </div>
+              </div>
 
-                <div>
-                  <Label className="text-gray-300">Cryptocurrency</Label>
-                  <select
-                    value={withdrawForm.crypto_type}
-                    onChange={(e) => setWithdrawForm({ ...withdrawForm, crypto_type: e.target.value })}
-                    className="w-full bg-gray-700/50 border border-gray-600 text-white rounded-md px-3 py-2 mt-2"
-                  >
-                    <option value="USDT">USDT (TRC20)</option>
-                    <option value="BTC">Bitcoin (BTC)</option>
-                    <option value="ETH">Ethereum (ETH)</option>
-                  </select>
-                </div>
+              <div>
+                <Label className="text-gray-300">Destination Wallet Address</Label>
+                <Input
+                  value={withdrawForm.destination_address}
+                  onChange={(e) => setWithdrawForm({ ...withdrawForm, destination_address: e.target.value })}
+                  placeholder="Enter wallet address"
+                  className="bg-gray-700/50 border-gray-600 text-white mt-2 font-mono"
+                  required
+                />
+              </div>
 
-                <div>
-                  <Label className="text-gray-300">Destination Wallet Address</Label>
-                  <Input
-                    value={withdrawForm.destination_address}
-                    onChange={(e) => setWithdrawForm({ ...withdrawForm, destination_address: e.target.value })}
-                    placeholder="Enter wallet address"
-                    className="bg-gray-700/50 border-gray-600 text-white mt-2 font-mono"
-                    required
-                  />
-                </div>
+              <Button
+                type="submit"
+                disabled={createWithdrawalMutation.isPending}
+                className="w-full bg-red-600 hover:bg-red-700"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                {createWithdrawalMutation.isPending ? 'Processing...' : 'Request Withdrawal'}
+              </Button>
+            </form>
 
-                <Button
-                  type="submit"
-                  disabled={createWithdrawalMutation.isPending}
-                  className="w-full bg-red-600 hover:bg-red-700"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  {createWithdrawalMutation.isPending ? 'Processing...' : 'Request Withdrawal'}
-                </Button>
-              </form>
-            </Card>
-          </div>
+            <div className="mt-6 p-4 bg-blue-600/10 rounded-lg border border-blue-600/30">
+              <p className="text-blue-400 text-sm">
+                Withdrawals are processed within 0–3 minutes. If you don't receive your funds within a few hours, please contact support. Ensure the wallet address you provide is correct — funds sent to a wrong address are unrecoverable.
+              </p>
+            </div>
+          </Card>
 
-          <div className="lg:col-span-2">
-            <Card className="bg-gray-800/50 border-gray-700 p-6">
-              <h3 className="text-lg font-bold text-white mb-4">Withdrawal History</h3>
-              
-              {withdrawals && withdrawals.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="border-gray-700">
-                        <TableHead className="text-gray-300">Amount</TableHead>
-                        <TableHead className="text-gray-300">Crypto</TableHead>
-                        <TableHead className="text-gray-300">Address</TableHead>
-                        <TableHead className="text-gray-300">Status</TableHead>
-                        <TableHead className="text-gray-300">Date</TableHead>
+          <Card className="bg-gray-800/50 border-gray-700 p-4 sm:p-6">
+            <h3 className="text-lg font-bold text-white mb-4">Withdrawal History</h3>
+            
+            {withdrawals && withdrawals.length > 0 ? (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-gray-700">
+                      <TableHead className="text-gray-300">Amount</TableHead>
+                      <TableHead className="text-gray-300">Crypto</TableHead>
+                      <TableHead className="text-gray-300">Status</TableHead>
+                      <TableHead className="text-gray-300">Date</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {withdrawals.map((withdrawal: any) => (
+                      <TableRow key={withdrawal.id} className="border-gray-700">
+                        <TableCell>
+                          <p className="text-white font-semibold">${withdrawal.amount}</p>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className="bg-purple-600/20 text-purple-400">
+                            {withdrawal.crypto_type}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={getStatusColor(withdrawal.status)}>
+                            {getStatusIcon(withdrawal.status)}
+                            <span className="ml-1 capitalize">{withdrawal.status}</span>
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-gray-400">
+                          {new Date(withdrawal.created_at).toLocaleDateString()}
+                        </TableCell>
                       </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {withdrawals.map((withdrawal: any) => (
-                        <TableRow key={withdrawal.id} className="border-gray-700">
-                          <TableCell>
-                            <p className="text-white font-semibold">${withdrawal.amount}</p>
-                          </TableCell>
-                          <TableCell>
-                            <Badge className="bg-purple-600/20 text-purple-400">
-                              {withdrawal.crypto_type}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <p className="text-gray-400 font-mono text-sm">
-                              {withdrawal.destination_address.slice(0, 10)}...
-                            </p>
-                          </TableCell>
-                          <TableCell>
-                            <Badge className={getStatusColor(withdrawal.status)}>
-                              {getStatusIcon(withdrawal.status)}
-                              <span className="ml-1 capitalize">{withdrawal.status}</span>
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-gray-400">
-                            {new Date(withdrawal.created_at).toLocaleDateString()}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              ) : (
-                <div className="text-center py-8 text-gray-400">
-                  <Download className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No withdrawals yet</p>
-                  <p className="text-sm">Your withdrawal history will appear here</p>
-                </div>
-              )}
-            </Card>
-          </div>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-400">
+                <Download className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>No withdrawals yet</p>
+                <p className="text-sm">Your withdrawal history will appear here</p>
+              </div>
+            )}
+          </Card>
         </div>
       </div>
     </div>

@@ -2,18 +2,12 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
-  Home, 
-  TrendingUp, 
-  Wallet, 
-  ArrowUpDown, 
-  MessageSquare, 
   Users, 
   Settings,
   Menu,
   X,
-  Upload,
-  Download,
-  Shield
+  Shield,
+  MessageSquare
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
@@ -52,20 +46,12 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   };
 
   const navItems = [
-    { name: 'Dashboard', href: '/dashboard', icon: Home },
-    { name: 'AI Plans', href: '/plans', icon: TrendingUp },
-    { name: 'Arbitrage', href: '/arbitrage', icon: ArrowUpDown },
-    { name: 'Deposit', href: '/deposit', icon: Upload },
-    { name: 'Withdraw', href: '/withdraw', icon: Download },
-    { name: 'Inbox', href: '/inbox', icon: MessageSquare },
     { name: 'Referrals', href: '/referrals', icon: Users },
     { name: 'Support', href: '/support', icon: MessageSquare },
     { name: 'Settings', href: '/settings', icon: Settings },
   ];
 
-  const mobileNavItems = navItems.filter(item => 
-    ['Dashboard', 'AI Plans', 'Deposit', 'Withdraw', 'Inbox'].includes(item.name)
-  );
+  const mobileNavItems = navItems;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
