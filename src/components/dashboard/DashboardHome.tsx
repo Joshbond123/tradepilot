@@ -121,7 +121,7 @@ export const DashboardHome = () => {
               className="bg-blue-600 hover:bg-blue-700 text-white"
             >
               <TrendingUp className="h-4 w-4 mr-2" />
-              AI Plans
+              Invest
             </Button>
           </div>
         </div>
@@ -204,7 +204,7 @@ export const DashboardHome = () => {
                         </p>
                       </div>
                       <Badge className="bg-green-600/20 text-green-400">
-                        {investment.investment_plans?.daily_profit_percentage}% Daily
+                        {investment.investment_plans?.daily_profit_percentage}% Monthly
                       </Badge>
                     </div>
                     
