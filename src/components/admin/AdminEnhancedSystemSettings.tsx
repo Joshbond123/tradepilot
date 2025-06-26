@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -149,11 +150,14 @@ export const AdminEnhancedSystemSettings = () => {
         
         console.log(`Updating ${cryptoType} with address: ${address}`);
         
+        // Type assertion to ensure cryptoType is the correct union type
+        const validCryptoType = cryptoType as 'BTC' | 'ETH' | 'USDT';
+        
         // First, deactivate existing addresses for this crypto type
         const { error: deactivateError } = await supabase
           .from('wallet_addresses')
           .update({ is_active: false })
-          .eq('crypto_type', cryptoType);
+          .eq('crypto_type', validCryptoType);
         
         if (deactivateError) {
           console.error(`Error deactivating ${cryptoType}:`, deactivateError);
@@ -164,7 +168,7 @@ export const AdminEnhancedSystemSettings = () => {
         const { error: upsertError } = await supabase
           .from('wallet_addresses')
           .upsert({
-            crypto_type: cryptoType as 'BTC' | 'ETH' | 'USDT',
+            crypto_type: validCryptoType,
             address: address as string,
             is_active: true,
             updated_at: new Date().toISOString()
