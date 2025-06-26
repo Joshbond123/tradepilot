@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,11 +6,13 @@ import { Mail, MailOpen, Trash2, Star, Archive } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
+import { useNotifications } from '@/hooks/useNotifications';
 
 export const InboxPage = () => {
   const [selectedMessage, setSelectedMessage] = useState<any>(null);
   const [user, setUser] = useState<any>(null);
   const { toast } = useToast();
+  const { refetchMessages } = useNotifications();
 
   useEffect(() => {
     const getUser = async () => {
@@ -45,6 +46,7 @@ export const InboxPage = () => {
 
       if (error) throw error;
       refetch();
+      refetchMessages();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -70,6 +72,7 @@ export const InboxPage = () => {
       
       setSelectedMessage(null);
       refetch();
+      refetchMessages();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -140,7 +143,7 @@ export const InboxPage = () => {
                       <div className="flex items-center space-x-2">
                         <span className="text-lg">{getMessageTypeIcon(message.type)}</span>
                         {!message.is_read && (
-                          <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                          <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
                         )}
                       </div>
                       <Badge className={getMessageTypeColor(message.type)}>

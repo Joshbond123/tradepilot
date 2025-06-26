@@ -11,7 +11,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 
 export const AdminRecaptchaSettings = () => {
-  const [settings, setSettings] = useState<any>({});
+  const [settings, setSettings] = useState<any>({
+    site_key: '',
+    secret_key: '',
+    is_enabled: false
+  });
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -25,35 +29,19 @@ export const AdminRecaptchaSettings = () => {
         .single();
       
       if (error && error.code !== 'PGRST116') {
-        // If no settings exist, create default ones
-        const { data: newData, error: insertError } = await supabase
-          .from('recaptcha_settings')
-          .insert({
-            site_key: '',
-            secret_key: '',
-            is_enabled: false
-          })
-          .select()
-          .single();
-        
-        if (insertError) throw insertError;
-        setSettings(newData);
-        return newData;
+        console.log('No reCAPTCHA settings found, using defaults');
+        return {
+          site_key: '',
+          secret_key: '',
+          is_enabled: false
+        };
       }
       
-      if (data) {
-        setSettings(data);
-        return data;
-      }
-      
-      // Create default settings if none exist
-      const defaultSettings = {
+      return data || {
         site_key: '',
         secret_key: '',
         is_enabled: false
       };
-      setSettings(defaultSettings);
-      return defaultSettings;
     },
   });
 
@@ -65,14 +53,38 @@ export const AdminRecaptchaSettings = () => {
 
   const updateRecaptchaMutation = useMutation({
     mutationFn: async (newSettings: any) => {
-      const { error } = await supabase
+      // Check if settings exist
+      const { data: existingSettings } = await supabase
         .from('recaptcha_settings')
-        .upsert({
-          ...newSettings,
-          updated_at: new Date().toISOString()
-        });
-      
-      if (error) throw error;
+        .select('id')
+        .limit(1)
+        .single();
+
+      if (existingSettings) {
+        // Update existing
+        const { error } = await supabase
+          .from('recaptcha_settings')
+          .update({
+            site_key: newSettings.site_key,
+            secret_key: newSettings.secret_key,
+            is_enabled: newSettings.is_enabled,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingSettings.id);
+        
+        if (error) throw error;
+      } else {
+        // Insert new
+        const { error } = await supabase
+          .from('recaptcha_settings')
+          .insert({
+            site_key: newSettings.site_key,
+            secret_key: newSettings.secret_key,
+            is_enabled: newSettings.is_enabled
+          });
+        
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-recaptcha-settings'] });

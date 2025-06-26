@@ -100,6 +100,12 @@ export const AdminMessageTemplates = () => {
   const handleCreateTemplate = () => {
     if (newTemplate && newTemplate.message_type && newTemplate.subject && newTemplate.content) {
       createTemplateMutation.mutate(newTemplate);
+    } else {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all required fields (Type, Subject, Content).",
+        variant: "destructive"
+      });
     }
   };
 
@@ -152,6 +158,7 @@ export const AdminMessageTemplates = () => {
                         <option value="registration">Registration</option>
                         <option value="withdrawal">Withdrawal</option>
                         <option value="deposit">Deposit</option>
+                        <option value="plan_activation">Plan Activation</option>
                         <option value="general">General</option>
                       </select>
                     </TableCell>

@@ -12,7 +12,9 @@ import {
   Eye,
   EyeOff,
   Calendar,
-  Target
+  Target,
+  Clock,
+  RotateCcw
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -87,7 +89,7 @@ export const DashboardHome = () => {
 
   useEffect(() => {
     fetchCryptoPrices();
-    const interval = setInterval(fetchCryptoPrices, 30000); // Update every 30 seconds
+    const interval = setInterval(fetchCryptoPrices, 30000);
     
     return () => clearInterval(interval);
   }, []);
@@ -120,10 +122,31 @@ export const DashboardHome = () => {
     return Math.max(days, 0);
   };
 
+  const getNextProfitTime = () => {
+    const now = new Date();
+    const nextProfit = new Date(now);
+    nextProfit.setDate(nextProfit.getDate() + 1);
+    nextProfit.setHours(0, 0, 0, 0);
+    
+    const diff = nextProfit.getTime() - now.getTime();
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    
+    return `${hours}h ${minutes}m`;
+  };
+
+  const getElapsedDays = (startDate: string, totalDays: number) => {
+    const start = new Date(startDate);
+    const now = new Date();
+    const diff = now.getTime() - start.getTime();
+    const elapsed = Math.floor(diff / (1000 * 60 * 60 * 24));
+    return Math.min(elapsed, totalDays);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-6">
       <div className="max-w-7xl mx-auto space-y-8">
-        {/* Header - Removed Invest button */}
+        {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold text-white">
@@ -196,45 +219,97 @@ export const DashboardHome = () => {
           </Card>
         </div>
 
-        {/* Active Investments and Live Crypto Prices */}
+        {/* Active AI Trading Plans and Live Crypto Prices */}
         <div className="grid lg:grid-cols-2 gap-8">
           <Card className="bg-gray-800/50 border-gray-700 p-6">
             <h3 className="text-xl font-bold text-white mb-6">Active AI Trading Plans</h3>
             
             {investments && investments.length > 0 ? (
-              <div className="space-y-4">
-                {investments.map((investment: any) => (
-                  <div key={investment.id} className="p-4 bg-gray-700/30 rounded-lg border border-gray-600">
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <h4 className="text-white font-semibold">{investment.investment_plans?.name}</h4>
-                        <p className="text-gray-400 text-sm">
-                          Invested: {formatCurrency(Number(investment.amount))}
-                        </p>
+              <div className="space-y-6">
+                {investments.map((investment: any) => {
+                  const elapsedDays = getElapsedDays(investment.start_date, investment.investment_plans?.duration_days || 30);
+                  const totalDays = investment.investment_plans?.duration_days || 30;
+                  
+                  return (
+                    <div key={investment.id} className="p-6 bg-gradient-to-r from-blue-900/30 to-purple-900/30 rounded-lg border border-blue-500/20">
+                      <div className="flex justify-between items-start mb-4">
+                        <div>
+                          <div className="flex items-center space-x-3 mb-2">
+                            <h4 className="text-white font-bold text-lg">
+                              🪪 {investment.investment_plans?.name} ({formatCurrency(Number(investment.amount))} Plan)
+                            </h4>
+                          </div>
+                          <div className="flex items-center space-x-2 mb-2">
+                            <Badge className="bg-green-600/20 text-green-400 animate-pulse">
+                              ● Active Trading
+                            </Badge>
+                          </div>
+                        </div>
                       </div>
-                      <Badge className="bg-green-600/20 text-green-400">
-                        {investment.investment_plans?.daily_profit_percentage}% Daily
-                      </Badge>
+                      
+                      <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div className="space-y-3">
+                          <div className="flex items-center space-x-2">
+                            <Calendar className="h-4 w-4 text-blue-400" />
+                            <span className="text-sm text-gray-400">📅 Start Date:</span>
+                            <span className="text-white font-semibold">
+                              Started on: {new Date(investment.start_date).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Clock className="h-4 w-4 text-purple-400" />
+                            <span className="text-sm text-gray-400">⏳ Plan Duration:</span>
+                            <span className="text-white font-semibold">{totalDays} Days</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <TrendingUp className="h-4 w-4 text-green-400" />
+                            <span className="text-sm text-gray-400">💰 Daily ROI:</span>
+                            <span className="text-green-400 font-bold">
+                              {investment.investment_plans?.daily_profit_percentage}% Daily
+                            </span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RotateCcw className="h-4 w-4 text-blue-400" />
+                            <span className="text-sm text-gray-400">🔄 Profit Cycle:</span>
+                            <span className="text-white font-semibold">Every 24 hours</span>
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-3">
+                          <div className="flex items-center space-x-2">
+                            <Target className="h-4 w-4 text-purple-400" />
+                            <span className="text-sm text-gray-400">📈 Total Earned So Far:</span>
+                            <span className="text-purple-400 font-bold">
+                              {formatCurrency(Number(investment.profit_earned))}
+                            </span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Clock className="h-4 w-4 text-orange-400" />
+                            <span className="text-sm text-gray-400">💸 Next Profit Time:</span>
+                            <span className="text-orange-400 font-semibold">
+                              In {getNextProfitTime()}
+                            </span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Calendar className="h-4 w-4 text-blue-400" />
+                            <span className="text-sm text-gray-400">📆 Days Remaining:</span>
+                            <span className="text-blue-400 font-bold">
+                              {elapsedDays} of {totalDays} Days
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-400">Progress</span>
+                          <span className="text-white">{Math.round(getProgress(investment))}%</span>
+                        </div>
+                        <Progress value={getProgress(investment)} className="h-3" />
+                      </div>
                     </div>
-                    
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Progress</span>
-                        <span className="text-white">{Math.round(getProgress(investment))}%</span>
-                      </div>
-                      <Progress value={getProgress(investment)} className="h-2" />
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-400">
-                          Profit: {formatCurrency(Number(investment.profit_earned))}
-                        </span>
-                        <span className="text-sm text-blue-400 flex items-center">
-                          <Calendar className="h-3 w-3 mr-1" />
-                          {getRemainingDays(investment.end_date)} days left
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="text-center py-8 text-gray-400">
@@ -245,7 +320,7 @@ export const DashboardHome = () => {
             )}
           </Card>
 
-          {/* Live Crypto Prices - Replaced Available Plans section */}
+          {/* Live Crypto Prices */}
           <Card className="bg-gray-800/50 border-gray-700 p-6">
             <h3 className="text-xl font-bold text-white mb-6">Live Crypto Prices</h3>
             
