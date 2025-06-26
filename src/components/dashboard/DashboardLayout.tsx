@@ -116,18 +116,6 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               })}
             </nav>
 
-            {/* Admin Access */}
-            <div className="p-4 border-t border-gray-700">
-              <Button
-                variant="ghost"
-                className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-red-900/20"
-                onClick={() => navigate('/admin')}
-              >
-                <Shield className="h-5 w-5 mr-3" />
-                Admin Panel
-              </Button>
-            </div>
-
             {/* Logout */}
             <div className="p-4 border-t border-gray-700">
               <Button
