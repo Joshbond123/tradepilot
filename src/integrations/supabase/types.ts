@@ -680,6 +680,18 @@ export type Database = {
         }
         Returns: string
       }
+      process_deposit: {
+        Args: { p_deposit_id: string; p_action: string; p_admin_notes?: string }
+        Returns: boolean
+      }
+      process_withdrawal: {
+        Args: {
+          p_withdrawal_id: string
+          p_action: string
+          p_admin_notes?: string
+        }
+        Returns: boolean
+      }
       send_user_notification: {
         Args: {
           p_user_id: string
@@ -688,6 +700,10 @@ export type Database = {
           p_type?: string
         }
         Returns: string
+      }
+      update_user_balance: {
+        Args: { p_user_id: string; p_amount: number; p_operation: string }
+        Returns: boolean
       }
     }
     Enums: {
