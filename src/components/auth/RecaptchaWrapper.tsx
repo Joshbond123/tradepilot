@@ -22,27 +22,17 @@ export const RecaptchaWrapper = ({ onVerify, onExpire }: RecaptchaWrapperProps) 
     queryKey: ['recaptcha-settings'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('system_settings')
-        .select('setting_value')
-        .eq('setting_key', 'recaptcha_enabled')
-        .single();
-      
-      if (error || !data || data.setting_value !== 'true') {
-        return { enabled: false };
-      }
-
-      const { data: recaptchaData, error: recaptchaError } = await supabase
         .from('recaptcha_settings')
         .select('site_key, is_enabled')
         .single();
       
-      if (recaptchaError || !recaptchaData?.is_enabled) {
+      if (error || !data?.is_enabled) {
         return { enabled: false };
       }
 
       return {
-        enabled: true,
-        siteKey: recaptchaData.site_key
+        enabled: data.is_enabled,
+        siteKey: data.site_key
       };
     },
   });
@@ -87,7 +77,7 @@ export const RecaptchaWrapper = ({ onVerify, onExpire }: RecaptchaWrapperProps) 
   }
 
   return (
-    <div className="flex justify-center">
+    <div className="flex justify-center my-4">
       <div id="recaptcha-container"></div>
     </div>
   );

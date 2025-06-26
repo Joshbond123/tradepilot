@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { MessageSquare, Edit, Save, X, Plus } from 'lucide-react';
+import { MessageSquare, Edit, Save, X, Plus, Trash2 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
@@ -68,6 +68,24 @@ export const AdminMessageTemplates = () => {
     },
   });
 
+  const deleteTemplateMutation = useMutation({
+    mutationFn: async (templateId: string) => {
+      const { error } = await supabase
+        .from('admin_message_templates')
+        .delete()
+        .eq('id', templateId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-message-templates'] });
+      toast({ title: "Template Deleted", description: "Message template has been deleted successfully." });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
   const handleSaveTemplate = (template: any) => {
     updateTemplateMutation.mutate({
       id: template.id,
@@ -85,9 +103,15 @@ export const AdminMessageTemplates = () => {
     }
   };
 
+  const handleDeleteTemplate = (templateId: string) => {
+    if (confirm('Are you sure you want to delete this template?')) {
+      deleteTemplateMutation.mutate(templateId);
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center space-x-2">
           <MessageSquare className="h-6 w-6 text-purple-400" />
           <h2 className="text-2xl font-bold text-white">Message Templates</h2>
@@ -111,7 +135,7 @@ export const AdminMessageTemplates = () => {
                 <TableRow className="border-gray-700">
                   <TableHead className="text-gray-300">Type</TableHead>
                   <TableHead className="text-gray-300">Subject</TableHead>
-                  <TableHead className="text-gray-300">Content Preview</TableHead>
+                  <TableHead className="text-gray-300 hidden md:table-cell">Content Preview</TableHead>
                   <TableHead className="text-gray-300">Status</TableHead>
                   <TableHead className="text-gray-300">Actions</TableHead>
                 </TableRow>
@@ -123,7 +147,7 @@ export const AdminMessageTemplates = () => {
                       <select
                         value={newTemplate.message_type}
                         onChange={(e) => setNewTemplate({ ...newTemplate, message_type: e.target.value })}
-                        className="bg-gray-700 border-gray-600 text-white rounded px-2 py-1"
+                        className="bg-gray-700 border-gray-600 text-white rounded px-2 py-1 w-full"
                       >
                         <option value="registration">Registration</option>
                         <option value="withdrawal">Withdrawal</option>
@@ -139,7 +163,7 @@ export const AdminMessageTemplates = () => {
                         placeholder="Subject"
                       />
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden md:table-cell">
                       <Textarea
                         value={newTemplate.content}
                         onChange={(e) => setNewTemplate({ ...newTemplate, content: e.target.value })}
@@ -190,7 +214,7 @@ export const AdminMessageTemplates = () => {
                         <p className="text-white font-semibold">{template.subject}</p>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden md:table-cell">
                       {editingTemplate?.id === template.id ? (
                         <Textarea
                           value={editingTemplate.content}
@@ -230,14 +254,24 @@ export const AdminMessageTemplates = () => {
                             </Button>
                           </>
                         ) : (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setEditingTemplate({ ...template })}
-                            className="border-gray-600 text-gray-400 hover:text-white"
-                          >
-                            <Edit className="h-3 w-3" />
-                          </Button>
+                          <>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setEditingTemplate({ ...template })}
+                              className="border-gray-600 text-gray-400 hover:text-white"
+                            >
+                              <Edit className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleDeleteTemplate(template.id)}
+                              className="border-red-600 text-red-400 hover:text-red-300"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </>
                         )}
                       </div>
                     </TableCell>
