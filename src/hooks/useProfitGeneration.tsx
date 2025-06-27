@@ -1,10 +1,11 @@
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 export const useProfitGeneration = () => {
   const { toast } = useToast();
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const activatePlan = async (planId: string, amount: number, userId: string) => {
     try {
@@ -49,9 +50,6 @@ export const useProfitGeneration = () => {
 
       if (balanceError) throw balanceError;
 
-      // Start profit generation immediately
-      await generateDailyProfit(investment.id, amount, plan.daily_profit_percentage);
-
       toast({
         title: "Plan Activated Successfully!",
         description: `Your ${plan.name} plan has been activated. Profits will be credited daily.`,
@@ -81,6 +79,19 @@ export const useProfitGeneration = () => {
         .single();
 
       if (investmentError) throw investmentError;
+
+      // Check if investment is still active and not expired
+      const now = new Date();
+      const endDate = new Date(investment.end_date);
+      
+      if (now > endDate) {
+        // Mark investment as inactive if expired
+        await supabase
+          .from('user_investments')
+          .update({ is_active: false })
+          .eq('id', investmentId);
+        return;
+      }
 
       // Update profit earned
       const { error: updateError } = await supabase
@@ -123,7 +134,7 @@ export const useProfitGeneration = () => {
           .from('user_investments')
           .select('*, investment_plans(*)')
           .eq('is_active', true)
-          .lt('end_date', new Date().toISOString());
+          .gte('end_date', new Date().toISOString());
 
         if (error) throw error;
 
@@ -139,12 +150,25 @@ export const useProfitGeneration = () => {
       }
     };
 
-    // Generate profits immediately and then every 24 hours
-    generateProfitsForActiveInvestments();
-    const interval = setInterval(generateProfitsForActiveInvestments, 24 * 60 * 60 * 1000);
+    // Clear any existing interval
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
 
-    return () => clearInterval(interval);
-  }, []);
+    // Generate profits immediately
+    generateProfitsForActiveInvestments();
+    
+    // Set up interval for every 24 hours (only one interval)
+    intervalRef.current = setInterval(generateProfitsForActiveInvestments, 24 * 60 * 60 * 1000);
+
+    // Cleanup function
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, []); // Empty dependency array to run only once
 
   return { activatePlan };
 };
