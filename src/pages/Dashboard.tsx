@@ -4,10 +4,14 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardHome } from '@/components/dashboard/DashboardHome';
+import { useProfitGeneration } from '@/hooks/useProfitGeneration';
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Initialize profit generation system
+  useProfitGeneration();
 
   useEffect(() => {
     const checkAuth = async () => {
