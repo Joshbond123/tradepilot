@@ -42,7 +42,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { path: '/withdraw', label: 'Withdraw', icon: ArrowUpDown },
     { path: '/arbitrage', label: 'Live Rates', icon: TrendingUp },
     { path: '/referrals', label: 'Referrals', icon: Users },
-    { path: '/inbox', label: 'Inbox', icon: BlinkingInboxIcon, hasUnread: unreadCount > 0 },
+    { path: '/inbox', label: 'Inbox', icon: 'inbox', hasUnread: unreadCount > 0 },
     { path: '/settings', label: 'Settings', icon: Settings },
     { path: '/support', label: 'Support', icon: HelpCircle },
   ];
@@ -84,7 +84,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             {/* Navigation */}
             <nav className="flex-1 p-4 space-y-2">
               {menuItems.map((item) => {
-                const Icon = item.icon;
+                const Icon = typeof item.icon === 'string' ? null : item.icon;
                 return (
                   <Button
                     key={item.path}
@@ -102,9 +102,9 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                   >
                     {item.label === 'Inbox' ? (
                       <BlinkingInboxIcon hasUnread={item.hasUnread || false} className="mr-3" />
-                    ) : (
+                    ) : Icon ? (
                       <Icon className="h-5 w-5 mr-3" />
-                    )}
+                    ) : null}
                     <span>{item.label}</span>
                     {item.hasUnread && (
                       <span className="ml-auto bg-red-500 text-white text-xs px-2 py-1 rounded-full">
