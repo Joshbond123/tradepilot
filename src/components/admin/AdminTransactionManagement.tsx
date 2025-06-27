@@ -153,7 +153,7 @@ export const AdminTransactionManagement = () => {
             <option value="all">All Status</option>
             <option value="pending">Pending</option>
             <option value="confirmed">Confirmed</option>
-            <option value="approved">Approved</option>
+            <option value="approved">successful</option>
             <option value="rejected">Rejected</option>
           </select>
         </div>
