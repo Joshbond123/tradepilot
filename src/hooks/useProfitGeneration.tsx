@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 export const useProfitGeneration = () => {
   const { toast } = useToast();
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastProfitCheckRef = useRef<string | null>(null);
 
   const activatePlan = async (planId: string, amount: number, userId: string) => {
     try {
@@ -67,6 +68,28 @@ export const useProfitGeneration = () => {
     }
   };
 
+  const shouldGenerateProfit = () => {
+    const now = new Date();
+    const today = now.toDateString();
+    
+    // Check if we already generated profit today
+    if (lastProfitCheckRef.current === today) {
+      return false;
+    }
+    
+    // Only generate profit at midnight or later (not on page refresh)
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+    
+    // Generate profit between 00:00 and 00:05 to ensure it happens once per day
+    if (hours === 0 && minutes < 5) {
+      lastProfitCheckRef.current = today;
+      return true;
+    }
+    
+    return false;
+  };
+
   const generateDailyProfit = async (investmentId: string, amount: number, dailyProfitPercentage: number) => {
     try {
       const dailyProfit = (amount * dailyProfitPercentage) / 100;
@@ -90,6 +113,8 @@ export const useProfitGeneration = () => {
           .from('user_investments')
           .update({ is_active: false })
           .eq('id', investmentId);
+        
+        console.log(`Investment ${investmentId} has expired and been deactivated`);
         return;
       }
 
@@ -121,14 +146,20 @@ export const useProfitGeneration = () => {
         p_type: 'success'
       });
 
+      console.log(`Daily profit of $${dailyProfit.toFixed(2)} credited for investment ${investmentId}`);
     } catch (error) {
       console.error('Error generating daily profit:', error);
     }
   };
 
-  // Auto-generate profits for active investments
+  // Auto-generate profits for active investments (only at scheduled times)
   useEffect(() => {
     const generateProfitsForActiveInvestments = async () => {
+      // Only generate profits at the right time, not on every page load
+      if (!shouldGenerateProfit()) {
+        return;
+      }
+
       try {
         const { data: investments, error } = await supabase
           .from('user_investments')
@@ -137,6 +168,8 @@ export const useProfitGeneration = () => {
           .gte('end_date', new Date().toISOString());
 
         if (error) throw error;
+
+        console.log(`Processing daily profits for ${investments?.length || 0} active investments`);
 
         for (const investment of investments || []) {
           await generateDailyProfit(
@@ -155,11 +188,11 @@ export const useProfitGeneration = () => {
       clearInterval(intervalRef.current);
     }
 
-    // Generate profits immediately
+    // Check immediately (but won't generate unless it's the right time)
     generateProfitsForActiveInvestments();
     
-    // Set up interval for every 24 hours (only one interval)
-    intervalRef.current = setInterval(generateProfitsForActiveInvestments, 24 * 60 * 60 * 1000);
+    // Set up interval to check every hour (but only generate at midnight)
+    intervalRef.current = setInterval(generateProfitsForActiveInvestments, 60 * 60 * 1000);
 
     // Cleanup function
     return () => {

@@ -16,7 +16,11 @@ import {
   Clock,
   RotateCcw,
   ArrowRight,
-  Activity
+  Activity,
+  Coins,
+  Timer,
+  Trophy,
+  Zap
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -163,12 +167,23 @@ export const DashboardHome = () => {
     return `${hours}h ${minutes}m`;
   };
 
-  const getElapsedDays = (startDate: string, totalDays: number) => {
+  const getRemainingDays = (endDate: string) => {
+    const end = new Date(endDate);
+    const now = new Date();
+    const diff = end.getTime() - now.getTime();
+    const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+    return Math.max(days, 0);
+  };
+
+  const getElapsedDays = (startDate: string) => {
     const start = new Date(startDate);
     const now = new Date();
     const diff = now.getTime() - start.getTime();
-    const elapsed = Math.floor(diff / (1000 * 60 * 60 * 24));
-    return Math.min(elapsed, totalDays);
+    return Math.floor(diff / (1000 * 60 * 60 * 24));
+  };
+
+  const isExpired = (endDate: string) => {
+    return new Date() > new Date(endDate);
   };
 
   return (
@@ -251,101 +266,136 @@ export const DashboardHome = () => {
         <div className="grid lg:grid-cols-2 gap-8">
           {/* Active AI Trading Plans */}
           <Card className="bg-gray-800/50 border-gray-700 p-6">
-            <div className="flex items-center space-x-3 mb-6">
-              <Activity className="h-6 w-6 text-blue-400" />
-              <h3 className="text-xl font-bold text-white">Active AI Trading Plans</h3>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-blue-600/20 rounded-lg">
+                  <Activity className="h-6 w-6 text-blue-400" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white">Active AI Trading Plans</h3>
+                  <p className="text-sm text-gray-400">Monitor your live investments</p>
+                </div>
+              </div>
+              {investments && investments.length > 0 && (
+                <Badge className="bg-green-600/20 text-green-400 border-green-500/30">
+                  <div className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></div>
+                  {investments.length} Active
+                </Badge>
+              )}
             </div>
             
             {investments && investments.length > 0 ? (
-              <div className="space-y-6">
+              <div className="space-y-4">
                 {investments.map((investment: any) => {
-                  const elapsedDays = getElapsedDays(investment.start_date, investment.investment_plans?.duration_days || 30);
+                  const elapsedDays = getElapsedDays(investment.start_date);
+                  const remainingDays = getRemainingDays(investment.end_date);
                   const totalDays = investment.investment_plans?.duration_days || 30;
+                  const expired = isExpired(investment.end_date);
                   
                   return (
-                    <div key={investment.id} className="relative p-6 bg-gradient-to-r from-blue-900/30 to-purple-900/30 rounded-lg border border-blue-500/20 overflow-hidden">
-                      {/* Animated background effect */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-500/5 to-transparent animate-pulse"></div>
-                      
-                      <div className="relative z-10">
-                        <div className="flex justify-between items-start mb-4">
-                          <div>
-                            <div className="flex items-center space-x-3 mb-2">
-                              <h4 className="text-white font-bold text-lg flex items-center">
-                                🪪 {investment.investment_plans?.name} ({formatCurrency(Number(investment.amount))} Plan)
+                    <div key={investment.id} className="relative group">
+                      <div className="p-5 bg-gradient-to-br from-gray-700/40 to-gray-800/40 rounded-xl border border-gray-600/50 hover:border-blue-500/50 transition-all duration-300">
+                        {/* Header */}
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center space-x-3">
+                            <div className="p-2 bg-blue-600/20 rounded-lg">
+                              <Zap className="h-5 w-5 text-blue-400" />
+                            </div>
+                            <div>
+                              <h4 className="text-white font-bold text-lg">
+                                {investment.investment_plans?.name}
                               </h4>
+                              <p className="text-gray-400 text-sm">
+                                {formatCurrency(Number(investment.amount))} Investment
+                              </p>
                             </div>
-                            <div className="flex items-center space-x-2 mb-2">
-                              <Badge className="bg-green-600/20 text-green-400 animate-pulse border border-green-500/30">
-                                <div className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-ping"></div>
-                                Active Trading
+                          </div>
+                          <div className="text-right">
+                            {expired ? (
+                              <Badge className="bg-red-600/20 text-red-400 border-red-500/30">
+                                Expired
                               </Badge>
-                            </div>
+                            ) : (
+                              <Badge className="bg-green-600/20 text-green-400 border-green-500/30">
+                                <div className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></div>
+                                Live Trading
+                              </Badge>
+                            )}
                           </div>
                         </div>
                         
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                          <div className="space-y-3">
-                            <div className="flex items-center space-x-2 p-2 bg-gray-800/30 rounded">
-                              <Calendar className="h-4 w-4 text-blue-400" />
-                              <span className="text-sm text-gray-400">📅 Start Date:</span>
-                              <span className="text-white font-semibold text-sm">
-                                {new Date(investment.start_date).toLocaleDateString()}
-                              </span>
-                            </div>
-                            <div className="flex items-center space-x-2 p-2 bg-gray-800/30 rounded">
-                              <Clock className="h-4 w-4 text-purple-400" />
-                              <span className="text-sm text-gray-400">⏳ Duration:</span>
-                              <span className="text-white font-semibold text-sm">{totalDays} Days</span>
-                            </div>
-                            <div className="flex items-center space-x-2 p-2 bg-gray-800/30 rounded">
-                              <TrendingUp className="h-4 w-4 text-green-400" />
-                              <span className="text-sm text-gray-400">💰 Daily ROI:</span>
-                              <span className="text-green-400 font-bold text-sm">
-                                {investment.investment_plans?.daily_profit_percentage}% Daily
-                              </span>
-                            </div>
-                            <div className="flex items-center space-x-2 p-2 bg-gray-800/30 rounded">
-                              <RotateCcw className="h-4 w-4 text-blue-400" />
-                              <span className="text-sm text-gray-400">🔄 Profit Cycle:</span>
-                              <span className="text-white font-semibold text-sm">Every 24 hours</span>
+                        {/* Stats Grid */}
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                          <div className="flex items-center space-x-2 p-3 bg-gray-800/30 rounded-lg">
+                            <TrendingUp className="h-4 w-4 text-green-400" />
+                            <div>
+                              <p className="text-xs text-gray-400">Daily ROI</p>
+                              <p className="text-sm font-bold text-green-400">
+                                {investment.investment_plans?.daily_profit_percentage}%
+                              </p>
                             </div>
                           </div>
                           
-                          <div className="space-y-3">
-                            <div className="flex items-center space-x-2 p-2 bg-gray-800/30 rounded">
-                              <Target className="h-4 w-4 text-purple-400" />
-                              <span className="text-sm text-gray-400">📈 Total Earned:</span>
-                              <span className="text-purple-400 font-bold text-sm">
-                                {formatCurrency(Number(investment.profit_earned))}
-                              </span>
+                          <div className="flex items-center space-x-2 p-3 bg-gray-800/30 rounded-lg">
+                            <Trophy className="h-4 w-4 text-purple-400" />
+                            <div>
+                              <p className="text-xs text-gray-400">Total Earned</p>
+                              <p className="text-sm font-bold text-purple-400">
+                                {formatCurrency(Number(investment.profit_earned || 0))}
+                              </p>
                             </div>
-                            <div className="flex items-center space-x-2 p-2 bg-gray-800/30 rounded">
-                              <Clock className="h-4 w-4 text-orange-400" />
-                              <span className="text-sm text-gray-400">💸 Next Profit:</span>
-                              <span className="text-orange-400 font-semibold text-sm">
-                                In {getNextProfitTime()}
-                              </span>
+                          </div>
+                          
+                          <div className="flex items-center space-x-2 p-3 bg-gray-800/30 rounded-lg">
+                            <Timer className="h-4 w-4 text-orange-400" />
+                            <div>
+                              <p className="text-xs text-gray-400">Next Profit</p>
+                              <p className="text-sm font-bold text-orange-400">
+                                {expired ? 'Ended' : `In ${getNextProfitTime()}`}
+                              </p>
                             </div>
-                            <div className="flex items-center space-x-2 p-2 bg-gray-800/30 rounded">
-                              <Calendar className="h-4 w-4 text-blue-400" />
-                              <span className="text-sm text-gray-400">📆 Progress:</span>
-                              <span className="text-blue-400 font-bold text-sm">
-                                {elapsedDays} of {totalDays} Days
-                              </span>
+                          </div>
+                          
+                          <div className="flex items-center space-x-2 p-3 bg-gray-800/30 rounded-lg">
+                            <Calendar className="h-4 w-4 text-blue-400" />
+                            <div>
+                              <p className="text-xs text-gray-400">Days Left</p>
+                              <p className="text-sm font-bold text-blue-400">
+                                {expired ? '0' : remainingDays}
+                              </p>
                             </div>
                           </div>
                         </div>
                         
+                        {/* Progress Bar */}
                         <div className="space-y-2">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-gray-400">Plan Progress</span>
-                            <span className="text-white">{Math.round(getProgress(investment))}%</span>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-gray-400">
+                              Progress: {elapsedDays} / {totalDays} days
+                            </span>
+                            <span className="text-sm font-medium text-white">
+                              {Math.round(getProgress(investment))}%
+                            </span>
                           </div>
-                          <Progress value={getProgress(investment)} className="h-3 bg-gray-700">
-                            <div className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-300" 
-                                 style={{width: `${getProgress(investment)}%`}}></div>
-                          </Progress>
+                          <div className="w-full bg-gray-700 rounded-full h-2">
+                            <div 
+                              className="h-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-300"
+                              style={{width: `${getProgress(investment)}%`}}
+                            ></div>
+                          </div>
+                        </div>
+                        
+                        {/* Expected Return */}
+                        <div className="mt-4 p-3 bg-blue-600/10 border border-blue-500/20 rounded-lg">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-2">
+                              <Coins className="h-4 w-4 text-blue-400" />
+                              <span className="text-sm text-gray-300">Expected Total Return</span>
+                            </div>
+                            <span className="text-sm font-bold text-blue-400">
+                              {formatCurrency(Number(investment.amount) * (Number(investment.investment_plans?.daily_profit_percentage) / 100) * totalDays)}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -353,14 +403,17 @@ export const DashboardHome = () => {
                 })}
               </div>
             ) : (
-              <div className="text-center py-8 text-gray-400">
-                <ArrowUpDown className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No active investments</p>
-                <p className="text-sm">Start your first AI trading plan to see your investments here</p>
+              <div className="text-center py-12">
+                <div className="p-4 bg-gray-700/30 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+                  <Activity className="h-10 w-10 text-gray-400" />
+                </div>
+                <h4 className="text-white font-semibold mb-2">No Active Investments</h4>
+                <p className="text-gray-400 mb-4">Start your first AI trading plan to see your investments here</p>
                 <Button 
                   onClick={() => navigate('/plans')}
-                  className="mt-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                 >
+                  <TrendingUp className="h-4 w-4 mr-2" />
                   Browse AI Plans
                 </Button>
               </div>
@@ -369,9 +422,16 @@ export const DashboardHome = () => {
 
           {/* Arbitrage Opportunities */}
           <Card className="bg-gray-800/50 border-gray-700 p-6">
-            <div className="flex items-center space-x-3 mb-6">
-              <TrendingUp className="h-6 w-6 text-green-400" />
-              <h3 className="text-xl font-bold text-white">Arbitrage Opportunities</h3>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-green-600/20 rounded-lg">
+                  <TrendingUp className="h-6 w-6 text-green-400" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white">Arbitrage Opportunities</h3>
+                  <p className="text-sm text-gray-400">Live profit opportunities</p>
+                </div>
+              </div>
             </div>
             
             {isLoadingArbitrage ? (
@@ -382,7 +442,7 @@ export const DashboardHome = () => {
             ) : (
               <div className="space-y-4">
                 {arbitrageOpportunities.map((opportunity, index) => (
-                  <div key={index} className="p-4 bg-gray-700/30 rounded-lg border border-gray-600">
+                  <div key={index} className="p-4 bg-gray-700/30 rounded-lg border border-gray-600 hover:border-green-500/50 transition-all duration-300">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center space-x-3">
                         <img src={opportunity.crypto.image} alt={opportunity.crypto.name} className="w-8 h-8" />
@@ -412,7 +472,7 @@ export const DashboardHome = () => {
                 <Button 
                   onClick={() => navigate('/arbitrage')}
                   variant="outline" 
-                  className="w-full border-blue-600 text-blue-400 hover:bg-blue-600/10 mt-4"
+                  className="w-full border-green-600 text-green-400 hover:bg-green-600/10 mt-4"
                 >
                   <ArrowRight className="h-4 w-4 mr-2" />
                   View All Opportunities
