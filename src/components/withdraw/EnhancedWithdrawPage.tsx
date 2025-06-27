@@ -171,7 +171,7 @@ export const EnhancedWithdrawPage = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending': return 'bg-yellow-600/20 text-yellow-400';
-      case 'successful: return 'bg-green-600/20 text-green-400';
+      case 'successful': return 'bg-green-600/20 text-green-400';
       case 'rejected': return 'bg-red-600/20 text-red-400';
       default: return 'bg-gray-600/20 text-gray-400';
     }
