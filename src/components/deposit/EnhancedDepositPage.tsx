@@ -353,7 +353,10 @@ export const EnhancedDepositPage = () => {
 
             <div className="mt-6 p-4 bg-blue-600/10 rounded-lg border border-blue-600/30">
               <p className="text-blue-400 text-sm">
-                Copy the wallet address and send the correct cryptocurrency. Deposits will be automatically credited to your dashboard once the transaction is confirmed on the blockchain. If you don't receive your deposit within a few hours, please contact support. Deposits are processed instantly once confirmed.
+                All cryptocurrencies sent will be automatically converted to USD and instantly added to your balance once confirmed on the blockchain.
+
+Copy the wallet address and send the correct cryptocurrency. Deposits are automatically credited after confirmation. If not received within a few hours, contact support. Deposits are processed instantly once confirmed.
+
               </p>
             </div>
           </Card>
